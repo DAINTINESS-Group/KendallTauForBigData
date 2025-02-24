@@ -1,0 +1,149 @@
+java -Xmx6G -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainGrid ./src/main/resources/datasetUniform-40m.txt 0 1 , 0 0 1 1 300 300 ./src/main/resources/timeExec-grid-results.txt
+
+
+java -Xmx5G -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.sampling.ExtractSample data/ookla-small.csv data/samples/ookla-small.csv 0.01
+java -Xmx5G -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.sampling.MaxSplitsNumber data/samples/ookla-small.csv 0 ,
+
+
+
+for j in $(seq 1 1 5); do
+    java -Xmx5G -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainGrid data/uniform.csv 0 1 , 0 0 1 1 5 5 "timeExec-grid-results-uniform${j}.txt"
+    java -Xmx5G -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainGrid data/diagonal.csv 0 1 , 0 0 1 1 5 5 "timeExec-grid-results-diagonal${j}.txt"
+    java -Xmx5G -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainGrid data/gaussian.csv 0 1 , 0 0 1 1 5 5 "timeExec-grid-results-gaussian${j}.txt"
+    java -Xmx5G -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainGrid data/sierpinski.csv 0 1 , 0 0 1 1 5 5 "timeExec-grid-results-sierpinski${j}.txt"
+    for i in $(seq 10 10 100); do
+        java -Xmx5G -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainGrid data/uniform.csv 0 1 , 0 0 1 1 "$i" "$i" "timeExec-grid-results-uniform${j}.txt"
+    done
+
+    for i in $(seq 10 10 100); do
+        java -Xmx5G -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainGrid data/diagonal.csv 0 1 , 0 0 1 1 "$i" "$i" "timeExec-grid-results-diagonal${j}.txt"
+    done
+
+    for i in $(seq 10 10 100); do
+        java -Xmx5G -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainGrid data/gaussian.csv 0 1 , 0 0 1 1 "$i" "$i" "timeExec-grid-results-gaussian${j}.txt"
+    done
+
+    for i in $(seq 10 10 100); do
+        java -Xmx5G -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainGrid data/sierpinski.csv 0 1 , 0 0 1 1 "$i" "$i" "timeExec-grid-results-sierpinski${j}.txt"
+    done
+done
+
+for i in $(seq 1 1 5); do
+    java -Xmx5G -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainArray data/uniform.csv 0 1 , timeExec-knight-results-uniform.txt
+done
+
+for i in $(seq 1 1 5); do
+    java -Xmx5G -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainArray data/diagonal.csv 0 1 , timeExec-knight-results-diagonal.txt
+done
+
+for i in $(seq 1 1 5); do
+    java -Xmx5G -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainArray data/gaussian.csv 0 1 , timeExec-knight-results-gaussian.txt
+done
+
+for i in $(seq 1 1 5); do
+    java -Xmx5G -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainArray data/sierpinski.csv 0 1 , timeExec-knight-results-sierpinski.txt
+done
+
+-------------------------
+java -Xmx5G -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainGrid data/ookla-small.csv 0 2 , 1.0 0.0 3932586.0 13070.0 "$i" "$i" timeExec-grid-results-ookla${j}.txt &&
+
+java -Xmx5G -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainGrid data/taxi-small.csv 0 2 , 0.0 0.0 3.1873875E7 1000004.0 "$i" "$i" timeExec-grid-results-taxi${j}.txt &&
+
+java -Xmx5G -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainGrid data/weather-small.csv 0 2 , -113.0 0.0 132.1 100.1 "$i" "$i" timeExec-grid-results-weather${j}.txt &&
+
+java -Xmx5G -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainGrid data/radiation-small.csv 0 2 , 3.5 0.0 99.1 1351.1 "$i" "$i" timeExec-grid-results-radiation${j}.txt
+
+
+for j in $(seq 1 1 5); do
+    java -Xmx5G -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainGrid data/ookla-small.csv 0 2 , 1.0 0.0 3932586.0 13070.0 5 5 timeExec-grid-results-ookla${j}.txt
+    java -Xmx5G -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainGrid data/taxi-small.csv 0 2 , 0.0 0.0 3.1873875E7 1000004.0 5 5 timeExec-grid-results-taxi${j}.txt
+    java -Xmx5G -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainGrid data/weather-small.csv 0 2 , -113.0 0.0 132.1 100.1 5 5 timeExec-grid-results-weather${j}.txt
+    java -Xmx5G -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainGrid data/radiation-small.csv 0 2 , 3.5 0.0 99.1 1351.1 5 5 timeExec-grid-results-radiation${j}.txt
+    for i in $(seq 10 10 100); do
+        java -Xmx5G -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainGrid data/ookla-small.csv 0 2 , 1.0 0.0 3932586.0 13070.0 "$i" "$i" timeExec-grid-results-ookla${j}.txt
+    done
+
+    for i in $(seq 10 10 100); do
+        java -Xmx5G -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainGrid data/taxi-small.csv 0 2 , 0.0 0.0 3.1873875E7 1000004.0 "$i" "$i" timeExec-grid-results-taxi${j}.txt
+    done
+
+    for i in $(seq 10 10 100); do
+        java -Xmx5G -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainGrid data/weather-small.csv 0 2 , -113.0 0.0 132.1 100.1 "$i" "$i" timeExec-grid-results-weather${j}.txt
+    done
+
+    for i in $(seq 10 10 100); do
+        java -Xmx5G -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainGrid data/radiation-small.csv 0 2 , 3.5 0.0 99.1 1351.1 "$i" "$i" timeExec-grid-results-radiation${j}.txt
+    done
+done
+
+
+for i in $(seq 1 1 5); do
+    java -Xmx5G -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainArray data/ookla-small.csv 0 2 , timeExec-knight-results-ookla.txt
+done
+
+for i in $(seq 1 1 5); do
+    java -Xmx5G -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainArray data/taxi-small.csv 0 2 , timeExec-knight-results-taxi.txt
+done
+
+for i in $(seq 1 1 5); do
+    java -Xmx5G -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainArray data/weather-small.csv 0 2 , timeExec-knight-results-weather.txt
+done
+
+for i in $(seq 1 1 5); do
+    java -Xmx5G -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainArray data/radiation-small.csv 0 2 , timeExec-knight-results-radiation.txt
+done
+
+-------------------------
+for j in $(seq 1 1 5); do
+        java -Xmx5G -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainAdaptiveGrid data/ookla-small.csv 0 2 , 1.0 0.0 3932586.0 13070.0 5 5 timeExec-gridAdaptive-results-ookla${j}.txt data/samples/ookla-small.csv
+        java -Xmx5G -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainAdaptiveGrid data/taxi-small.csv 0 2 , 0.0 0.0 3.1873875E7 1000004.0 5 5 timeExec-gridAdaptive-results-taxi${j}.txt data/samples/taxi-small.csv
+        java -Xmx5G -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainAdaptiveGrid data/weather-small.csv 0 2 , -113.0 0.0 132.1 100.1 5 5 timeExec-gridAdaptive-results-weather${j}.txt data/samples/weather-small.csv
+        java -Xmx5G -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainAdaptiveGrid data/radiation-small.csv 0 2 , 3.5 0.0 99.1 1351.1 5 5 timeExec-gridAdaptive-results-radiation${j}.txt data/samples/radiation-small.csv
+    for i in $(seq 10 10 100); do
+        java -Xmx5G -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainAdaptiveGrid data/ookla-small.csv 0 2 , 1.0 0.0 3932586.0 13070.0 "$i" "$i" timeExec-gridAdaptive-results-ookla${j}.txt data/samples/ookla-small.csv
+    done
+
+    for i in $(seq 10 10 100); do
+        java -Xmx5G -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainAdaptiveGrid data/taxi-small.csv 0 2 , 0.0 0.0 3.1873875E7 1000004.0 "$i" "$i" timeExec-gridAdaptive-results-taxi${j}.txt data/samples/taxi-small.csv
+    done
+
+    for i in $(seq 10 10 100); do
+        java -Xmx5G -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainAdaptiveGrid data/weather-small.csv 0 2 , -113.0 0.0 132.1 100.1 "$i" "$i" timeExec-gridAdaptive-results-weather${j}.txt data/samples/weather-small.csv
+    done
+
+    for i in $(seq 10 10 100); do
+        java -Xmx5G -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainAdaptiveGrid data/radiation-small.csv 0 2 , 3.5 0.0 99.1 1351.1 "$i" "$i" timeExec-gridAdaptive-results-radiation${j}.txt data/samples/radiation-small.csv
+    done
+done
+
+for j in $(seq 1 1 5); do
+        java -Xmx5G -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainAdaptiveGrid data/uniform.csv 0 1 , 0 0 100 100 5 5 timeExec-gridAdaptive-results-uniform${j}.txt data/samples/uniform.csv
+        java -Xmx5G -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainAdaptiveGrid data/diagonal.csv 0 1 , 0 0 100 100 5 5 timeExec-gridAdaptive-results-diagonal{j}.txt data/samples/diagonal.csv
+        java -Xmx5G -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainAdaptiveGrid data/gaussian.csv 0 1 , 0 0 100 100 5 5 timeExec-gridAdaptive-results-gaussian{j}.txt data/samples/gaussian.csv
+        java -Xmx5G -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainAdaptiveGrid data/sierpinski.csv 0 1 , 0 0 100 100 5 5 timeExec-gridAdaptive-results-sierpinski{j}.txt data/samples/sierpinski.csv
+    for i in $(seq 10 10 100); do
+        java -Xmx5G -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainAdaptiveGrid data/uniform.csv 0 1 , 0 0 100 100 "$i" "$i" timeExec-gridAdaptive-results-uniform{j}.txt data/samples/uniform.csv
+    done
+
+    for i in $(seq 10 10 100); do
+        java -Xmx5G -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainAdaptiveGrid data/diagonal.csv 0 1 , 0 0 100 100 "$i" "$i" timeExec-gridAdaptive-results-diagonal{j}.txt data/samples/diagonal.csv
+    done
+
+    for i in $(seq 10 10 100); do
+        java -Xmx5G -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainAdaptiveGrid data/gaussian.csv 0 1 , 0 0 100 100 "$i" "$i" timeExec-gridAdaptive-results-gaussian{j}.txt data/samples/gaussian.csv
+    done
+
+    for i in $(seq 10 10 100); do
+        java -Xmx5G -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainAdaptiveGrid data/sierpinski.csv 0 1 , 0 0 100 100 "$i" "$i" timeExec-gridAdaptive-results-sierpinski{j}.txt data/samples/sierpinski.csv
+    done
+done
+
+
+
+java -Xmx5G -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainAdaptiveGrid data/ookla-small.csv 0 2 , 1.0 0.0 3932586.0 13070.0 5 5 timeExec-gridAdaptive-results-ookla.txt data/samples/ookla-small.csv &&
+java -Xmx5G -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainAdaptiveGrid data/taxi-small.csv 0 2 , 0.0 0.0 3.1873875E7 1000004.0 5 5 timeExec-gridAdaptive-results-taxi.txt data/samples/taxi-small.csv &&
+java -Xmx5G -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainAdaptiveGrid data/weather-small.csv 0 2 , -113.0 0.0 132.1 100.1 5 5 timeExec-gridAdaptive-results-weather.txt data/samples/weather-small.csv &&
+java -Xmx5G -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainAdaptiveGrid data/radiation-small.csv 0 2 , 3.5 0.0 99.1 1351.1 2 2 timeExec-gridAdaptive-results-radiation.txt data/samples/radiation-small.csv
+
+
+spark-submit --class gr.archimedesai.distributed.Main --master yarn --deploy-mode client --conf spark.yarn.archive="hdfs://node13:9000/user/spark-jars.tar.gz" --executor-memory 5g --executor-cores 2 --driver-memory 5g --num-executors 12 --conf spark.network.timeout=600s ~/Spatial-Joins-1.0-SNAPSHOT.jar hdfs://node13:9000/user/user/synth-skewed/pruned/diagonal.csv 0 1 , 0 0 1 1 "$i" "$i" "timeExec-grid-results-diagonal${j}.txt"

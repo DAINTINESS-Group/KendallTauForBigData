@@ -1,0 +1,412 @@
+package gr.archimedesai.algorithms;
+
+import gr.archimedesai.Pair;
+import gr.archimedesai.centralized.grid.Grid;
+import scala.Tuple2;
+
+import java.util.*;
+
+public class Algorithms {
+
+    public static void sortPairsByX(Pair[] pairs){
+        Arrays.sort(pairs, new Comparator<Pair>() {
+            /** {@inheritDoc} */
+            @Override
+            public int compare(Pair pair1, Pair pair2) {
+                int compareFirst = Double.compare(pair1.getX(),pair2.getX());
+                return compareFirst != 0 ? compareFirst : Double.compare(pair1.getY(),pair2.getY());
+            }
+        });
+    }
+
+    public static Tuple2<Pair[], long[]> apacheCommons(Pair[] points) {
+
+        final int n = points.length;
+        final long numPairs = sum(n - 1);
+
+//        Arrays.sort(points, new Comparator<Pair>() {
+//            /** {@inheritDoc} */
+//            @Override
+//            public int compare(Pair pair1, Pair pair2) {
+//                int compareFirst = Double.compare(pair1.getX(),pair2.getX());
+//                return compareFirst != 0 ? compareFirst : Double.compare(pair1.getY(),pair2.getY());
+//            }
+//        });
+
+        long tiedXPairs = 0;
+        long tiedXYPairs = 0;
+        long consecutiveXTies = 1;
+        long consecutiveXYTies = 1;
+        Pair prev = points[0];
+        for (int i = 1; i < n; i++) {
+            final Pair curr = points[i];
+            if (Double.compare(curr.getX(),prev.getX() )==0) {
+                consecutiveXTies++;
+                if (Double.compare(curr.getY(),prev.getY())==0) {
+                    consecutiveXYTies++;
+                } else {
+                    tiedXYPairs += sum(consecutiveXYTies - 1);
+                    consecutiveXYTies = 1;
+                }
+            } else {
+                tiedXPairs += sum(consecutiveXTies - 1);
+                consecutiveXTies = 1;
+                tiedXYPairs += sum(consecutiveXYTies - 1);
+                consecutiveXYTies = 1;
+            }
+            prev = curr;
+        }
+        tiedXPairs += sum(consecutiveXTies - 1);
+        tiedXYPairs += sum(consecutiveXYTies - 1);
+
+        long swaps = 0;
+        @SuppressWarnings("unchecked")
+        Pair[] pairsDestination = new Pair[n];
+        for (int segmentSize = 1; segmentSize < n; segmentSize <<= 1) {
+            for (int offset = 0; offset < n; offset += 2 * segmentSize) {
+                int i = offset;
+                final int iEnd = Math.min(i + segmentSize, n);
+                int j = iEnd;
+                final int jEnd = Math.min(j + segmentSize, n);
+
+                int copyLocation = offset;
+                while (i < iEnd || j < jEnd) {
+                    if (i < iEnd) {
+                        if (j < jEnd) {
+                            if (Double.compare(points[i].getY(),points[j].getY()) <= 0) {
+                                pairsDestination[copyLocation] = points[i];
+                                i++;
+                            } else {
+                                pairsDestination[copyLocation] = points[j];
+                                j++;
+                                swaps += iEnd - i;
+                            }
+                        } else {
+                            pairsDestination[copyLocation] = points[i];
+                            i++;
+                        }
+                    } else {
+                        pairsDestination[copyLocation] = points[j];
+                        j++;
+                    }
+                    copyLocation++;
+                }
+            }
+            final Pair[] pairsTemp = points;
+            points = pairsDestination;
+            pairsDestination = pairsTemp;
+        }
+
+        long tiedYPairs = 0;
+        long consecutiveYTies = 1;
+        prev = points[0];
+        for (int i = 1; i < n; i++) {
+            final Pair curr = points[i];
+            if (Double.compare(curr.getY(), prev.getY())==0) {
+                consecutiveYTies++;
+            } else {
+                tiedYPairs += sum(consecutiveYTies - 1);
+                consecutiveYTies = 1;
+            }
+            prev = curr;
+        }
+        tiedYPairs += sum(consecutiveYTies - 1);
+
+//        System.out.println(tiedXYPairs);
+//        System.out.println("c"+ (numPairs- (tiedXPairs-tiedXYPairs) - (tiedYPairs-tiedXYPairs)-swaps - tiedXYPairs));
+//        System.out.println("d"+ swaps);
+//        System.out.println("Txy"+ ((numPairs-(numPairs- (tiedXPairs-tiedXYPairs) - (tiedYPairs-tiedXYPairs)-swaps - tiedXYPairs) - swaps - (tiedXPairs-tiedXYPairs) - (tiedYPairs-tiedXYPairs) ) ));
+
+        return Tuple2.apply(points,new long[]{swaps, tiedXPairs-tiedXYPairs,tiedYPairs-tiedXYPairs, tiedXYPairs});
+
+//        return new long[]{numPairs - tiedXPairs - tiedYPairs + tiedXYPairs -swaps,swaps,tiedXPairs-tiedXYPairs,tiedYPairs-tiedXYPairs};
+    }
+
+    private static long sum(long n) {
+        return n * (n + 1) / 2L;
+    }
+
+    public static long[] southTile(Pair[] tilePairs, Pair[] southTilePairs) {
+
+        int cursor1 = 0, cursor2 = 0;
+        long counterTieOnOtherAttribute = 0;
+//        long counterPairsWithOtherAttributeSmaller = 0;
+        long counterPairsWithOtherAttributeLarger = 0;
+        int numberTuplesTile1 = tilePairs.length;
+        int numberTuplesTile2 = southTilePairs.length;
+
+        // Merge phase
+        while (cursor1 < numberTuplesTile1 && cursor2 < numberTuplesTile2) {
+            double key1 = tilePairs[cursor1].getX();
+            double key2 = southTilePairs[cursor2].getX();
+
+            if (key1 == key2) {
+                // Find all matching rows in table1
+                int startI = cursor1;
+                while (cursor1 < tilePairs.length && Double.compare(tilePairs[cursor1].getX(), key1)==0) {
+                    cursor1++;
+                }
+
+                // Find all matching rows in table2
+                int startJ = cursor2;
+                while (cursor2 < southTilePairs.length && Double.compare(southTilePairs[cursor2].getX(), key2)==0) {
+                    cursor2++;
+                }
+
+                // Join each matching row from table1 with all matching rows from table2
+//                for (int m = startI; m < cursor1; m++) {
+//                    counterPairsWithOtherAttributeLarger += (numberTuplesTile2 - cursor2);
+//                    for (int n = startJ; n < cursor2; n++) {
+//                        counterTieOnOtherAttribute++;
+//                    }
+//                }
+
+                counterPairsWithOtherAttributeLarger = counterPairsWithOtherAttributeLarger + ((long) (numberTuplesTile2 - cursor2)*(cursor1 - startI));
+                counterTieOnOtherAttribute = counterTieOnOtherAttribute + ((long) (cursor1 - startI)*(cursor2 -startJ));
+
+                // Reset j to continue checking for more matches in table1
+                cursor2 = startJ;
+            } else if (Double.compare(key1, key2)==-1) {
+                cursor1++;
+                counterPairsWithOtherAttributeLarger += (numberTuplesTile2 - cursor2);
+            } else {
+                cursor2++;
+//                counterPairsWithOtherAttributeSmaller += (numberTuplesTile1 - cursor1);
+            }
+        }
+        return new long []{counterPairsWithOtherAttributeLarger, counterTieOnOtherAttribute};
+//        return new long []{counterPairsWithOtherAttributeSmaller, counterPairsWithOtherAttributeLarger, counterTieOnOtherAttribute};
+    }
+//
+//    public static long[] southTileMultiWay(Pair[][] pairArray) {
+//        for (int i = 0; i < pairArray.length-1; i++) {
+//            Pair[] pairs = pairArray[i];
+//            int[] cursors = new int [pairs.length-1-i];
+//
+//            for (int j = 0; j < pairArray[i].length; j++) {
+//
+//            }
+//
+//        }
+//
+//
+//        int cursor1 = 0, cursor2 = 0;
+//        long counterTieOnOtherAttribute = 0;
+//        long counterPairsWithOtherAttributeSmaller = 0;
+//        long counterPairsWithOtherAttributeLarger = 0;
+//        int numberTuplesTile1 = tilePairs.length;
+//        int numberTuplesTile2 = southTilePairs.length;
+//
+//        // Merge phase
+//        while (cursor1 < numberTuplesTile1 && cursor2 < numberTuplesTile2) {
+//            double key1 = tilePairs[cursor1].getX();
+//            double key2 = southTilePairs[cursor2].getX();
+//
+//            if (key1 == key2) {
+//                // Find all matching rows in table1
+//                int startI = cursor1;
+//                while (cursor1 < tilePairs.length && tilePairs[cursor1].getX() == key1) {
+//                    cursor1++;
+//                }
+//
+//                // Find all matching rows in table2
+//                int startJ = cursor2;
+//                while (cursor2 < southTilePairs.length && southTilePairs[cursor2].getX() == key2) {
+//                    cursor2++;
+//                }
+//
+//                // Join each matching row from table1 with all matching rows from table2
+//                for (int m = startI; m < cursor1; m++) {
+////                	for(int runner = cursor2; runner < numberTuplesTile2; runner++) {
+////                		larger.add(new Pair<DoublePair, DoublePair>(tilePairs.get(m), southTilePairs.get(runner)));
+////                	}
+//                    counterPairsWithOtherAttributeLarger += (numberTuplesTile2 - cursor2);
+//                    for (int n = startJ; n < cursor2; n++) {
+////                        tied.add(new Pair<DoublePair, DoublePair>(tilePairs.get(m), southTilePairs.get(n)));
+//                        counterTieOnOtherAttribute++;
+//                    }
+//                }
+//
+//                // Reset j to continue checking for more matches in table1
+//                cursor2 = startJ;
+//            } else if (key1 < key2) {
+////            	for(int runner = cursor2; runner < numberTuplesTile2; runner++) {
+////            		larger.add(new Pair<DoublePair, DoublePair>(tilePairs.get(cursor1), southTilePairs.get(runner)));
+////            	}
+//                cursor1++;
+//                counterPairsWithOtherAttributeLarger += (numberTuplesTile2 - cursor2);
+//            } else {
+////            	for(int runner = cursor1; runner < numberTuplesTile1; runner++) {
+////            		smaller.add(new Pair<DoublePair, DoublePair>(tilePairs.get(runner), southTilePairs.get(cursor2)));
+////            	}
+//                cursor2++;
+//                counterPairsWithOtherAttributeSmaller += (numberTuplesTile1 - cursor1);
+//            }
+//        }
+//        return new long []{counterPairsWithOtherAttributeSmaller, counterPairsWithOtherAttributeLarger, counterTieOnOtherAttribute};
+////        correlationStats.incrementConcordantCount(counterPairsWithOtherAttributeSmaller);
+////        correlationStats.incrementDiscordantCount(counterPairsWithOtherAttributeLarger);
+////        correlationStats.incrementTiedXCount(counterTieOnOtherAttribute);
+//    }
+
+
+
+    public static long[] eastTile(Pair[] tilePairs, Pair[] eastTilePairs) {
+
+        int cursor1 = 0, cursor2 = 0;
+        long counterTieOnOtherAttribute = 0;
+//        long counterPairsWithOtherAttributeConcordant = 0;
+        long counterPairsWithOtherAttributeDiscordant = 0;
+        int numberTuplesTile1 = tilePairs.length;
+        int numberTuplesTile2 = eastTilePairs.length;
+
+        // Merge phase
+        while (cursor1 < numberTuplesTile1 && cursor2 < numberTuplesTile2) {
+            double key1 = tilePairs[cursor1].getY();
+            double key2 = eastTilePairs[cursor2].getY();
+
+            if (key1 == key2) {
+                // Find all matching rows in table1
+                int startI = cursor1;
+                while (cursor1 < numberTuplesTile1 && Double.compare(tilePairs[cursor1].getY(), key1)==0) {
+                    cursor1++;
+                }
+
+                // Find all matching rows in table2
+                int startJ = cursor2;
+                while (cursor2 < numberTuplesTile2 && Double.compare(eastTilePairs[cursor2].getY(), key2)==0) {
+                    cursor2++;
+                }
+
+                // Join each matching row from table1 with all matching rows from table2
+//                for (int m = startI; m < cursor1; m++) {
+//                    counterPairsWithOtherAttributeConcordant += (numberTuplesTile2 - cursor2);
+//                    for (int n = startJ; n < cursor2; n++) {
+//                        counterTieOnOtherAttribute++;
+//                    }
+//                }
+
+                counterTieOnOtherAttribute = counterTieOnOtherAttribute + (long) (cursor1 - startI)*(cursor2 -startJ);
+
+                // Reset j to continue checking for more matches in table1
+                cursor2 = startJ;
+            } else if (Double.compare(key1, key2)==-1) {
+                cursor1++;
+//                counterPairsWithOtherAttributeConcordant += (numberTuplesTile2 - cursor2);
+            } else {
+                cursor2++;
+                counterPairsWithOtherAttributeDiscordant += (numberTuplesTile1 - cursor1);
+                //WHICH ONE? (cursor1); //
+            }
+        }
+//        return new long []{counterPairsWithOtherAttributeConcordant, counterPairsWithOtherAttributeDiscordant, counterTieOnOtherAttribute};
+        return new long []{counterPairsWithOtherAttributeDiscordant, counterTieOnOtherAttribute};
+    }
+
+
+    public static Tuple2<Pair[], long[]> apacheCommonsWithoutSelfHorizontal(Pair[] points, Grid grid) {
+
+        final int n = points.length;
+        final long numPairs = sum(n - 1);
+
+//        Arrays.sort(points, new Comparator<Pair>() {
+//            /** {@inheritDoc} */
+//            @Override
+//            public int compare(Pair pair1, Pair pair2) {
+//                int compareFirst = Double.compare(pair1.getX(),pair2.getX());
+//                return compareFirst != 0 ? compareFirst : Double.compare(pair1.getY(),pair2.getY());
+//            }
+//        });
+
+        long tiedXPairs = 0;
+        long tiedXYPairs = 0;
+        long consecutiveXTies = 1;
+        long consecutiveXYTies = 1;
+        Pair prev = points[0];
+        for (int i = 1; i < n; i++) {
+            final Pair curr = points[i];
+            if (Double.compare(curr.getX(),prev.getX() )==0) {
+                consecutiveXTies++;
+                if (Double.compare(curr.getY(),prev.getY())==0) {
+                    consecutiveXYTies++;
+                } else {
+                    tiedXYPairs += sum(consecutiveXYTies - 1);
+                    consecutiveXYTies = 1;
+                }
+            } else {
+                tiedXPairs += sum(consecutiveXTies - 1);
+                consecutiveXTies = 1;
+                tiedXYPairs += sum(consecutiveXYTies - 1);
+                consecutiveXYTies = 1;
+            }
+            prev = curr;
+        }
+        tiedXPairs += sum(consecutiveXTies - 1);
+        tiedXYPairs += sum(consecutiveXYTies - 1);
+
+        long swaps = 0;
+        @SuppressWarnings("unchecked")
+        Pair[] pairsDestination = new Pair[n];
+        for (int segmentSize = 1; segmentSize < n; segmentSize <<= 1) {
+            for (int offset = 0; offset < n; offset += 2 * segmentSize) {
+                int i = offset;
+                final int iEnd = Math.min(i + segmentSize, n);
+                int j = iEnd;
+                final int jEnd = Math.min(j + segmentSize, n);
+
+                int copyLocation = offset;
+                while (i < iEnd || j < jEnd) {
+                    if (i < iEnd) {
+                        if (j < jEnd) {
+                            if (Double.compare(points[i].getY(),points[j].getY()) <= 0) {
+                                pairsDestination[copyLocation] = points[i];
+                                i++;
+                            } else {
+                                pairsDestination[copyLocation] = points[j];
+                                j++;
+                                swaps += iEnd - i;
+                            }
+                        } else {
+                            pairsDestination[copyLocation] = points[i];
+                            i++;
+                        }
+                    } else {
+                        pairsDestination[copyLocation] = points[j];
+                        j++;
+                    }
+                    copyLocation++;
+                }
+            }
+            final Pair[] pairsTemp = points;
+            points = pairsDestination;
+            pairsDestination = pairsTemp;
+        }
+
+        long tiedYPairs = 0;
+        long consecutiveYTies = 1;
+        prev = points[0];
+        for (int i = 1; i < n; i++) {
+            final Pair curr = points[i];
+            if (Double.compare(curr.getY(), prev.getY())==0) {
+                consecutiveYTies++;
+            } else {
+                tiedYPairs += sum(consecutiveYTies - 1);
+                consecutiveYTies = 1;
+            }
+            prev = curr;
+        }
+        tiedYPairs += sum(consecutiveYTies - 1);
+
+//        System.out.println(tiedXYPairs);
+//        System.out.println("c"+ (numPairs- (tiedXPairs-tiedXYPairs) - (tiedYPairs-tiedXYPairs)-swaps - tiedXYPairs));
+//        System.out.println("d"+ swaps);
+//        System.out.println("Txy"+ ((numPairs-(numPairs- (tiedXPairs-tiedXYPairs) - (tiedYPairs-tiedXYPairs)-swaps - tiedXYPairs) - swaps - (tiedXPairs-tiedXYPairs) - (tiedYPairs-tiedXYPairs) ) ));
+
+        return Tuple2.apply(points,new long[]{swaps, tiedXPairs-tiedXYPairs,tiedYPairs-tiedXYPairs, tiedXYPairs});
+
+//        return new long[]{numPairs - tiedXPairs - tiedYPairs + tiedXYPairs -swaps,swaps,tiedXPairs-tiedXYPairs,tiedYPairs-tiedXYPairs};
+    }
+
+
+
+}
