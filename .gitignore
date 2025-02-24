@@ -35,5 +35,5 @@ build/
 ### Mac OS ###
 .DS_Store
 
-main/resources/datasetUniform.txt
-main/resources/uniform.txt
+src/main/resources/datasetUniform.txt
+src/main/resources/uniform.txt
