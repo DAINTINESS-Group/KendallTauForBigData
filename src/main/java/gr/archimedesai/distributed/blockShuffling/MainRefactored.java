@@ -1,11 +1,11 @@
-package gr.archimedesai.distributed;
+package gr.archimedesai.distributed.blockShuffling;
 
 import gr.archimedesai.Pair;
 import gr.archimedesai.algorithms.Algorithms;
 import gr.archimedesai.distributed.grid.Grid;
-import gr.archimedesai.distributed.grid.shapes.Point;
-import gr.archimedesai.distributed.grid.shapes.Rectangle;
 import gr.archimedesai.distributed.partitioner.CustomPartitioner;
+import gr.archimedesai.shapes.Point;
+import gr.archimedesai.shapes.Rectangle;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
@@ -25,10 +25,10 @@ public class MainRefactored {
     public static void main(String[] args) {
 
         SparkConf sparkConf = new SparkConf().set("spark.serializer", "org.apache.spark.serializer.KryoSerializer").set("spark.kryo.registrationRequired", "true")
-                .registerKryoClasses(new Class[]{Object.class,Grid.class, HashMap.class, Point.class, Rectangle.class, Pair.class, Pair[].class, java.lang.invoke.SerializedLambda.class, org.apache.spark.util.collection.CompactBuffer[].class, scala.reflect.ManifestFactory$.MODULE$.Any().getClass()});
+                .registerKryoClasses(new Class[]{Object.class,Grid.class, HashMap.class, Point.class, Rectangle.class, Pair.class, Pair[].class, java.lang.invoke.SerializedLambda.class, org.apache.spark.util.collection.CompactBuffer[].class,org.apache.spark.util.collection.CompactBuffer.class/*,scala.reflect.ManifestFactory$.MODULE$.Any().getClass()*/});
         SparkSession sparkSession = SparkSession.builder().config(sparkConf)/*.master("local[2]")*/.getOrCreate();
         JavaSparkContext jsc = JavaSparkContext.fromSparkContext(sparkSession.sparkContext());
-        CustomPartitioner partitioner = new CustomPartitioner(Integer.getInteger(args[11]));
+        CustomPartitioner partitioner = new CustomPartitioner(Integer.parseInt(args[11]));
 
         final int xIndex = Integer.parseInt(args[1]);
         final int yIndex = Integer.parseInt(args[2]);

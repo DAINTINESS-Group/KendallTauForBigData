@@ -1,7 +1,7 @@
 package gr.archimedesai.distributed.grid;
 
 import gr.archimedesai.Pair;
-import gr.archimedesai.distributed.grid.shapes.Rectangle;
+import gr.archimedesai.shapes.Rectangle;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -57,6 +57,23 @@ public class Grid {
     public int getYStripeId(double y){
         return (int) ((y-rectangle.getLowerBound().getY()) / this.y);
     }
+
+    public double getXLowerRangeByStripeId(int xc){
+        return (xc*x)+ rectangle.getLowerBound().getX();
+    }
+
+    public double getYLowerRangeByStripeId(int yc){
+        return (yc*y)+ rectangle.getLowerBound().getY();
+    }
+
+    public double getXUpperRangeByStripeId(int xc){
+        return ((xc+1)*x)+ rectangle.getLowerBound().getX();
+    }
+
+    public double getYUpperRangeByStripeId(int yc){
+        return ((yc+1)*y)+ rectangle.getLowerBound().getY();
+    }
+
 
 //    public int getCellIdFromXStripes(int xc, double y){
 //        int yc = (int) ((y-rectangle.getLowerBound().getY()) / this.y);
