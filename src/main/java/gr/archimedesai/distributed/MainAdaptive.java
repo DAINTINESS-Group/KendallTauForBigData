@@ -3,7 +3,6 @@ package gr.archimedesai.distributed;
 import gr.archimedesai.Pair;
 import gr.archimedesai.algorithms.Algorithms;
 import gr.archimedesai.distributed.grid.AdaptiveGrid;
-import gr.archimedesai.distributed.partitioner.CustomPartitioner;
 import gr.archimedesai.distributed.partitioner.LPTPartitioner;
 import gr.archimedesai.shapes.Point;
 import gr.archimedesai.shapes.Rectangle;
@@ -78,8 +77,6 @@ public class MainAdaptive {
 
             Broadcast<AdaptiveGrid> gridBroadcasted = jsc.broadcast(grid);
             JavaRDD<String> rddString = jsc.textFile(args[0]);
-
-    //        JavaRDD<String> rddString = jsc.textFile(args[2] + args[3] + ".csv");
 
             JavaRDD<Pair> rddData = rddString.map((String line) -> {
                 String[] elements = line.split(args[3]);
@@ -263,8 +260,8 @@ public class MainAdaptive {
             }
 
             Path path = Paths.get(args[0]);
-            BufferedWriter bwCellsX = new BufferedWriter(new FileWriter("cells-gridAdaptive-"+grid.getCellsInXAxis()+"-"+grid.getCellsInYAxis()+"-"+"stripesX-"+path.getFileName()));
-            BufferedWriter bwCellsY = new BufferedWriter(new FileWriter("cells-gridAdaptive-"+grid.getCellsInXAxis()+"-"+grid.getCellsInYAxis()+"-"+"stripesY-"+path.getFileName()));
+            BufferedWriter bwCellsX = new BufferedWriter(new FileWriter("stripes-gridAdaptive-"+grid.getCellsInXAxis()+"-"+grid.getCellsInYAxis()+"-"+"stripesX-"+path.getFileName()));
+            BufferedWriter bwCellsY = new BufferedWriter(new FileWriter("stripes-gridAdaptive-"+grid.getCellsInXAxis()+"-"+grid.getCellsInYAxis()+"-"+"stripesY-"+path.getFileName()));
 
 
             for (int xc = 0; xc < grid.getCellsInXAxis(); xc++) {
@@ -295,17 +292,6 @@ public class MainAdaptive {
                 }
             }
 
-
-//            for (int xc = grid.getCellsInXAxis()-1; xc >= 0; xc--) {
-//                for (int yc = grid.getCellsInYAxis()-1; yc >= 0; yc--) {
-//                    int c = (concDiscStripesX._2.getOrDefault((grid.getCellIdFromXcYc(xc, yc)),-1));
-//                    if(c!=-1){
-//                        bwCells.write(xc+"\t"+yc+"\t"+c+"\n");
-//                    }else{
-//                        bwCells.write(xc+"\t"+yc+"\t"+0+"\n");
-//                    }
-//                }
-//            }
             bwCellsX.close();
             bwCellsY.close();
 

@@ -236,8 +236,8 @@ public class Main {
             }
 
             Path path = Paths.get(args[0]);
-            BufferedWriter bwCellsX = new BufferedWriter(new FileWriter("cells-gridAdaptive-"+grid.getCellsInXAxis()+"-"+grid.getCellsInYAxis()+"-"+"stripesX-"+path.getFileName()));
-            BufferedWriter bwCellsY = new BufferedWriter(new FileWriter("cells-gridAdaptive-"+grid.getCellsInXAxis()+"-"+grid.getCellsInYAxis()+"-"+"stripesY-"+path.getFileName()));
+            BufferedWriter bwCellsX = new BufferedWriter(new FileWriter("stripes-gridRegular-"+grid.getCellsInXAxis()+"-"+grid.getCellsInYAxis()+"-"+"stripesX-"+path.getFileName()));
+            BufferedWriter bwCellsY = new BufferedWriter(new FileWriter("stripes-gridRegular-"+grid.getCellsInXAxis()+"-"+grid.getCellsInYAxis()+"-"+"stripesY-"+path.getFileName()));
 
 
             for (int xc = 0; xc < grid.getCellsInXAxis(); xc++) {

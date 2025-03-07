@@ -281,7 +281,6 @@ public class MainPerCell {
             }
 
             Path path = Paths.get(args[0]);
-            new FileWriter(file, true);
             BufferedWriter bwCells = new BufferedWriter(new FileWriter("cells-grid-"+grid.getCellsInXAxis()+"-"+grid.getCellsInYAxis()+"-"+path.getFileName()));
             for (int xc = grid.getCellsInXAxis()-1; xc >= 0; xc--) {
                 for (int yc = grid.getCellsInYAxis()-1; yc >= 0; yc--) {

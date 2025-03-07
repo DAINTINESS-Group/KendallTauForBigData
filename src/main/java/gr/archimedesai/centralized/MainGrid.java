@@ -8,6 +8,8 @@ import gr.archimedesai.shapes.Rectangle;
 import scala.Tuple2;
 
 import java.io.*;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -166,6 +168,25 @@ public class MainGrid {
             System.out.println(Arrays.toString(concordantsDiscordants));
             System.out.println(lineCount+ " "+concordants);
             System.out.println("tau is: " + tau);
+
+            Path path = Paths.get(args[0]);
+            BufferedWriter bwCells = new BufferedWriter(new FileWriter("cells-gridRegular-"+grid.getCellsInXAxis()+"-"+grid.getCellsInYAxis()+"-"+path.getFileName()));
+            for (int xc = grid.getCellsInXAxis()-1; xc >= 0; xc--) {
+                for (int yc = grid.getCellsInYAxis()-1; yc >= 0; yc--) {
+                    Pair[] pairs = data.get((grid.getCellIdFromXcYc(xc, yc)));
+                    int c = -1;
+                    if(pairs!=null){
+                        c = pairs.length;
+                    }
+                    if(c!=-1){
+                        bwCells.write(xc+"\t"+yc+"\t"+c+"\n");
+                    }else{
+                        bwCells.write(xc+"\t"+yc+"\t"+0+"\n");
+                    }
+                }
+            }
+            bwCells.close();
+
             bw.write(Integer.parseInt(args[8])+","+elapsedtime+ ","+((t2-t1)/1000)+","+((t3-t2)/1000)+","+((t4-t3)/1000)+","+((t5-t4)/1000)+","+((t6-t5)/1000)+","+grid.cellsStats()+"\n");
             bw.close();
         } catch (IOException e) {
