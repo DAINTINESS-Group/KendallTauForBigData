@@ -1,7 +1,6 @@
 package gr.archimedesai.distributed.grid;
 
 import gr.archimedesai.Pair;
-import gr.archimedesai.algorithms.Algorithms;
 import gr.archimedesai.shapes.Rectangle;
 
 import java.util.*;
@@ -27,12 +26,12 @@ public class AdaptiveGrid {
 
         samples.sort(Comparator.comparingDouble(Pair::getX));
         for (int k = 1; k < cellsInXAxis; k++) {
-            splitsX[k-1] = samples.get((int) Math.floor(k * (samples.size() - 1) / (double) cellsInXAxis)).getX();
+            splitsX[k-1] = samples.get((int) Math.floor(k * ((samples.size() - 1) / (double) cellsInXAxis))).getX();
         }
 
         samples.sort(Comparator.comparingDouble(Pair::getY));
         for (int k = 1; k < cellsInYAxis; k++) {
-            splitsY[k-1] = samples.get((int) Math.floor(k * (samples.size() - 1) / (double) cellsInYAxis)).getY();
+            splitsY[k-1] = samples.get((int) Math.floor(k * ((samples.size() - 1) / (double) cellsInYAxis))).getY();
         }
 //        System.out.println(splitsX.length + " min:"+rectangle.getLowerBound().getX() + " " + Arrays.toString(splitsX) + " max:"+rectangle.getUpperBound().getX() );
 //        System.out.println(splitsY.length + " min:"+rectangle.getLowerBound().getY() + " " + Arrays.toString(splitsY) + " max:"+rectangle.getUpperBound().getY() );

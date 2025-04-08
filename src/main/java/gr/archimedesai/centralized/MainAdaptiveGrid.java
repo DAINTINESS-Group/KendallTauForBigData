@@ -34,7 +34,7 @@ public class MainAdaptiveGrid {
 
             long[] concordantsDiscordants = new long[4];
 
-            HashMap<Integer, Integer> counterCells = new HashMap<>();
+            HashMap<Integer, Integer> histogram = new HashMap<>();
 
             List<Pair> samplesPairs = new ArrayList<>();
             try (BufferedReader br = new BufferedReader(new FileReader(sampleFilePath))) {
@@ -57,13 +57,13 @@ public class MainAdaptiveGrid {
                     lineCount++;
                     String[] vals = line.split(args[3]);
                     int cellId = grid.getCellId(Double.parseDouble(vals[xIndex]), Double.parseDouble(vals[yIndex]));
-                    counterCells.compute(cellId, (key, value) -> (value==null)?1:(value+1));
+                    histogram.compute(cellId, (key, value) -> (value==null)?1:(value+1));
                 }
             } catch (IOException e) {
                 e.printStackTrace();
             }
 
-            grid.initializeMap(counterCells);
+            grid.initializeMap(histogram);
 
             try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
                 String line;
@@ -75,7 +75,7 @@ public class MainAdaptiveGrid {
                 e.printStackTrace();
             }
 
-            grid.clearCounter();
+//            grid.clearCounter();
             long t2 = System.currentTimeMillis();
             System.out.println("Data read: " + (t2-t1) + " ms");
 
@@ -100,6 +100,7 @@ public class MainAdaptiveGrid {
                     }
                 }
             }
+            System.out.println(Arrays.toString(concordantsDiscordants));
 
             long t3 = System.currentTimeMillis();
             System.out.println("South tiles processing: " + (t3-t2) + " ms");
@@ -126,11 +127,8 @@ public class MainAdaptiveGrid {
                         for (int x = xc+1; x < grid.getCellsInXAxis(); x++) {
                             Pair[] c2 = data.getOrDefault((grid.getCellIdFromXcYc(x, yc)),null);
                             if(c2!=null){
-//                                long e1= System.currentTimeMillis();
                                 long[] res = Algorithms.eastTile(c1,c2);
-//                                System.out.println("c"+grid.getCellIdFromXcYc(xc, yc)+": "+c1.length+ " c"+grid.getCellIdFromXcYc(x, yc)+": "+c2.length+ " time: "+(System.currentTimeMillis()-e1)+ " ms "+"ties: "+res[1]);
                                 concordantsDiscordants[0] += res[0];
-    //                            concordantsDiscordants[1] += res[1];
                                 concordantsDiscordants[2] += res[1];
                             }
                         }
@@ -141,34 +139,27 @@ public class MainAdaptiveGrid {
             long t5 = System.currentTimeMillis();
             System.out.println("East tiles processing: " + (t5-t4) + " ms");
 
-            for (int xc = grid.getCellsInXAxis()-1; xc >= 0; xc--) {
-                for (int yc = grid.getCellsInYAxis()-1; yc >= 0; yc--) {
-                    Pair[] c = (data.getOrDefault((grid.getCellIdFromXcYc(xc, yc)),null));
-                    if(c!=null){
-    //                    long cConc = 0;
-                        long cDisc = 0;
-    //                    for (int xcConc = 0; xcConc < xc; xcConc++) {
-    //                        for (int ycConc = 0; ycConc < yc; ycConc++) {
-    //                            Pair[] c1 = (data.getOrDefault((grid.getCellIdFromXcYc(xcConc, ycConc)),null));
-    //                            if(c1!=null){
-    //                                cConc = cConc + c1.length;
-    //                            }
-    //                        }
-    //                    }
+//            for (int xc = grid.getCellsInXAxis()-1; xc >= 0; xc--) {
+//                for (int yc = grid.getCellsInYAxis()-1; yc >= 0; yc--) {
+//                    Pair[] c = (data.getOrDefault((grid.getCellIdFromXcYc(xc, yc)),null));
+//                    if(c!=null){
+//                        long cDisc = 0;
+//
+//                        for (int xcDisc = xc+1; xcDisc < grid.getCellsInXAxis(); xcDisc++) {
+//                            for (int ycDisc = 0; ycDisc < yc; ycDisc++) {
+//                                Pair[] c2 = (data.getOrDefault((grid.getCellIdFromXcYc(xcDisc, ycDisc)),null));
+//                                if(c2!=null){
+//                                    cDisc = cDisc + c2.length;
+//                                }
+//                            }
+//                        }
+//                        concordantsDiscordants[0] += cDisc*c.length;
+//                    }
+//                }
+//            }
 
-                        for (int xcDisc = xc+1; xcDisc < grid.getCellsInXAxis(); xcDisc++) {
-                            for (int ycDisc = 0; ycDisc < yc; ycDisc++) {
-                                Pair[] c2 = (data.getOrDefault((grid.getCellIdFromXcYc(xcDisc, ycDisc)),null));
-                                if(c2!=null){
-                                    cDisc = cDisc + c2.length;
-                                }
-                            }
-                        }
-    //                    concordantsDiscordants[0] += cConc*c.length;
-                        concordantsDiscordants[0] += cDisc*c.length;
-                    }
-                }
-            }
+            concordantsDiscordants[0] = concordantsDiscordants[0] + Algorithms.discordantCells(histogram, grid.getCellsInXAxis(), grid.getCellsInYAxis());
+
 
             long t6 = System.currentTimeMillis();
             System.out.println("Histogram processing: " + (t6-t5) + " ms");

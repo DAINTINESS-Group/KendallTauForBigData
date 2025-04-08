@@ -2,6 +2,7 @@ package gr.archimedesai.algorithms;
 
 import gr.archimedesai.Pair;
 import gr.archimedesai.centralized.grid.Grid;
+import scala.Array;
 import scala.Tuple2;
 
 import java.util.*;
@@ -408,5 +409,186 @@ public class Algorithms {
     }
 
 
+    public static long[] southTile(double[] tilePairs, long[] tilePairsFreq, double[] southTilePairs, long[] southTilePairsFreq) {
+
+        int cursor1 = 0, cursor2 = 0;
+        long counterTieOnOtherAttribute = 0;
+        long counterPairsWithOtherAttributeLarger = 0;
+        int numberTuplesTile1 = tilePairs.length;
+        int numberTuplesTile2 = southTilePairs.length;
+
+        // Merge phase
+        while (cursor1 < numberTuplesTile1 && cursor2 < numberTuplesTile2) {
+            double key1 = tilePairs[cursor1];
+            double key2 = southTilePairs[cursor2];
+
+            if (key1 == key2) {
+
+                int key1DistinctVals;
+                int key2DistinctVals;
+                int keyNextCursor2 = 0;
+
+
+                if(cursor1==numberTuplesTile1-1){
+                    key1DistinctVals = (int) tilePairsFreq[cursor1];
+                }else{
+                    key1DistinctVals = (int) (tilePairsFreq[cursor1] - tilePairsFreq[cursor1+1]);
+                }
+
+                if(cursor2==numberTuplesTile2-1){
+                    key2DistinctVals = (int) southTilePairsFreq[cursor2];
+                }else{
+                    key2DistinctVals = (int) (southTilePairsFreq[cursor2] - southTilePairsFreq[cursor2+1]);
+                    keyNextCursor2 =(int) southTilePairsFreq[cursor2+1];
+                }
+                cursor1++;
+
+//                counterPairsWithOtherAttributeLarger = counterPairsWithOtherAttributeLarger + ((long) (numberTuplesTile2 - cursor2)*(cursor1 - startI));
+//                counterTieOnOtherAttribute = counterTieOnOtherAttribute + ((long) (cursor1 - startI)*(cursor2 -startJ));
+
+                counterPairsWithOtherAttributeLarger = counterPairsWithOtherAttributeLarger + ((long) keyNextCursor2*key1DistinctVals);
+                counterTieOnOtherAttribute = counterTieOnOtherAttribute + ((long) key1DistinctVals*key2DistinctVals);
+
+            } else if (Double.compare(key1, key2)==-1) {
+//                cursor1++;
+//                counterPairsWithOtherAttributeLarger += (numberTuplesTile2 - cursor2);
+                int key1DistinctVals;
+                if(cursor1==numberTuplesTile1-1){
+                    key1DistinctVals = (int) tilePairsFreq[cursor1];
+                }else{
+                    key1DistinctVals = (int) (tilePairsFreq[cursor1] - tilePairsFreq[cursor1+1]);
+                }
+
+                counterPairsWithOtherAttributeLarger += (long)(southTilePairsFreq[cursor2]*key1DistinctVals);
+                cursor1++;
+            } else {
+                cursor2++;
+            }
+        }
+        return new long []{counterPairsWithOtherAttributeLarger, counterTieOnOtherAttribute};
+    }
+
+    public static long[] eastTile(double[] tilePairs,  long[] tilePairsFreq, double[] eastTilePairs, long[] eastTilePairsFreq) {
+
+        int cursor1 = 0, cursor2 = 0;
+        long counterTieOnOtherAttribute = 0;
+        long counterPairsWithOtherAttributeDiscordant = 0;
+        int numberTuplesTile1 = tilePairs.length;
+        int numberTuplesTile2 = eastTilePairs.length;
+
+        // Merge phase
+        while (cursor1 < numberTuplesTile1 && cursor2 < numberTuplesTile2) {
+            double key1 = tilePairs[cursor1];
+            double key2 = eastTilePairs[cursor2];
+
+            if (key1 == key2) {
+                int key1DistinctVals;
+                int key2DistinctVals;
+
+                if(cursor1==numberTuplesTile1-1){
+                    key1DistinctVals = (int) tilePairsFreq[cursor1];
+                }else{
+                    key1DistinctVals = (int) (tilePairsFreq[cursor1] - tilePairsFreq[cursor1+1]);
+                }
+
+                if(cursor2==numberTuplesTile2-1){
+                    key2DistinctVals = (int) eastTilePairsFreq[cursor2];
+                }else{
+                    key2DistinctVals = (int) (eastTilePairsFreq[cursor2] - eastTilePairsFreq[cursor2+1]);
+                }
+                cursor1++;
+
+                counterTieOnOtherAttribute = counterTieOnOtherAttribute + ((long) key1DistinctVals*key2DistinctVals);
+
+//                // Find all matching rows in table1
+//                int startI = cursor1;
+//                while (cursor1 < numberTuplesTile1 && Double.compare(tilePairs[cursor1][0], key1)==0) {
+//                    cursor1++;
+//                }
+//
+//                // Find all matching rows in table2
+//                int startJ = cursor2;
+//                while (cursor2 < numberTuplesTile2 && Double.compare(eastTilePairs[cursor2][0], key2)==0) {
+//                    cursor2++;
+//                }
+
+//                counterTieOnOtherAttribute = counterTieOnOtherAttribute + (long) (cursor1 - startI)*(cursor2 -startJ);
+
+//                // Reset j to continue checking for more matches in table1
+//                cursor2 = startJ;
+            } else if (Double.compare(key1, key2)==-1) {
+                cursor1++;
+            } else {
+
+//                int key1DistinctVals;
+//                if(cursor1==numberTuplesTile1-1){
+//                    key1DistinctVals = (int) tilePairsFreq[cursor1];
+//                }else{
+//                    key1DistinctVals = (int) (tilePairsFreq[cursor1] - tilePairsFreq[cursor1+1]);
+//                }
+//                counterPairsWithOtherAttributeDiscordant += (long)(eastTilePairsFreq[cursor2]*key1DistinctVals);
+//                cursor2++;
+//                counterPairsWithOtherAttributeDiscordant += (numberTuplesTile1 - cursor1);
+
+                int key2DistinctVals;
+                if(cursor2==numberTuplesTile2-1){
+                    key2DistinctVals = (int) eastTilePairsFreq[cursor2];
+                }else{
+                    key2DistinctVals = (int) (eastTilePairsFreq[cursor2] - eastTilePairsFreq[cursor2+1]);
+                }
+                counterPairsWithOtherAttributeDiscordant += (long)(tilePairsFreq[cursor1]*key2DistinctVals);
+                cursor2++;
+            }
+        }
+        return new long []{counterPairsWithOtherAttributeDiscordant, counterTieOnOtherAttribute};
+    }
+
+//    public long discordantCells(HashMap<Integer,Integer> histogram, int cellsInXAxis, int cellsInYAxis) {
+//
+//        int[] previous = new int[cellsInXAxis];
+//        int[] current = new int[cellsInXAxis];
+//        long discorants = 0;
+//
+//        previous[cellsInXAxis-1]=histogram.getOrDefault(cellsInXAxis-1,0/*lastcellrightbottom*/);
+//        for (int i = cellsInXAxis-2; i >= 0; i--) {
+//            previous[i] = histogram.getOrDefault(i,0/*i,0*/) + previous[i+1];
+//        }
+//
+//        for (int j = 1; j < cellsInYAxis; j++) {
+//            current[cellsInXAxis-1] = previous[cellsInXAxis-1] + histogram.getOrDefault(/*cellsInXAxis-1,j*/cellsInXAxis-1+(cellsInXAxis*j),0);
+//            for (int i = cellsInXAxis-2; i >= 0; i--) {
+//                current[i] = current[i+1] + previous[i] - previous[i+1] + histogram.getOrDefault(/*i,j*/i+(cellsInXAxis*j),0);
+////                current[i] = current[i-1] + previous[j] - previous[j-1] + histogram.getOrDefault(/*i,j*/i+(cellsInXAxis*j),0);
+//                discorants += histogram.getOrDefault(/*i,j*/i+(cellsInXAxis*j),0)*previous[j-1];
+//            }
+////            previous = Array.copyOf(current);
+//            System.arraycopy(current, 0, previous, 0, cellsInXAxis);
+//            Arrays.fill(current, 0);
+//        }
+//        return discorants;
+//    }
+
+    public static long discordantCells(HashMap<Integer,Integer> histogram, int cellsInXAxis, int cellsInYAxis) {
+
+        int[] myarr = new int[cellsInXAxis];
+        long discorants = 0;
+
+        myarr[cellsInXAxis-1]=histogram.getOrDefault(cellsInXAxis-1,0);
+        for (int i = cellsInXAxis-2; i >= 0; i--) {
+            myarr[i] = histogram.getOrDefault(i,0/*i,0*/) + myarr[i+1];
+        }
+
+        for (int j = 1; j < cellsInYAxis; j++) {
+            int diag = myarr[cellsInXAxis-1];
+            myarr[cellsInXAxis-1] = myarr[cellsInXAxis-1] + histogram.getOrDefault(cellsInXAxis-1+(cellsInXAxis*j),0);
+            for (int i = cellsInXAxis-2; i >= 0; i--) {
+                int below = myarr[i];
+                myarr[i] += myarr[i+1]-diag + histogram.getOrDefault(i+(cellsInXAxis*j),0);
+                discorants = discorants + (long) histogram.getOrDefault(i + (cellsInXAxis * j), 0) *diag;
+                diag = below;
+            }
+        }
+        return discorants;
+    }
 
 }

@@ -190,16 +190,7 @@ public class MainRefactored {
                 for (int yc = grid.getCellsInYAxis()-1; yc >= 0; yc--) {
                     int c = (concDiscStripesX._2.getOrDefault((grid.getCellIdFromXcYc(xc, yc)),-1));
                     if(c!=-1){
-    //                    long cConc = 0;
                         long cDisc = 0;
-    //                    for (int xcConc = 0; xcConc < xc; xcConc++) {
-    //                        for (int ycConc = 0; ycConc < yc; ycConc++) {
-    //                            int c1 = (concDiscStripesX._2.getOrDefault((grid.getCellIdFromXcYc(xcConc, ycConc)),-1));
-    //                            if(c1!=-1){
-    //                                cConc = cConc + c1;
-    //                            }
-    //                        }
-    //                    }
 
                         for (int xcDisc = xc+1; xcDisc < grid.getCellsInXAxis(); xcDisc++) {
                             for (int ycDisc = 0; ycDisc < yc; ycDisc++) {
@@ -209,7 +200,6 @@ public class MainRefactored {
                                 }
                             }
                         }
-    //                    concDiscStripesY[0] = concDiscStripesY[0] + cConc*c;
                         concDiscStripesY[0] = concDiscStripesY[0] + cDisc*c;
                     }
                 }

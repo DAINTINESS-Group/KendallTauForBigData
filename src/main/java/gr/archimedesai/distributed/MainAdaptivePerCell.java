@@ -202,7 +202,6 @@ public class MainAdaptivePerCell {
                                 long[] numbersFromTwoCells = Algorithms.southTile(current, map.get(j));
                                 numbers[0] = numbers[0] + numbersFromTwoCells[0];
                                 numbers[1] = numbers[1] + numbersFromTwoCells[1];
-    //                            numbers[2] = numbers[2] + numbersFromTwoCells[2];
                             }
                         }
                     }
@@ -216,7 +215,6 @@ public class MainAdaptivePerCell {
             }).reduce((Function2<Tuple2<long[], HashMap<Integer, Integer>>, Tuple2<long[], HashMap<Integer, Integer>>, Tuple2<long[], HashMap<Integer, Integer>>>) (tuple1, tuple2) -> {
                 tuple1._1[0] = tuple1._1[0]+tuple2._1[0];
                 tuple1._1[1] = tuple1._1[1]+tuple2._1[1];
-    //            tuple1._1[2] = tuple1._1[2]+tuple2._1[2];
                 tuple1._2.putAll(tuple2._2);
                 return tuple1;
             });
@@ -224,37 +222,29 @@ public class MainAdaptivePerCell {
             long t2 = System.currentTimeMillis();
             concDiscStripesY[0] = concDiscStripesY[0] + concDiscStripesX._1[0];
             concDiscStripesY[1] = concDiscStripesY[1] + concDiscStripesX._1[1];
-    //        concDiscStripesY[2] = concDiscStripesY[2] + concDiscStripesX._1[2];
 
 
-            for (int xc = grid.getCellsInXAxis()-1; xc >= 0; xc--) {
-                for (int yc = grid.getCellsInYAxis()-1; yc >= 0; yc--) {
-                    int c = (concDiscStripesX._2.getOrDefault((grid.getCellIdFromXcYc(xc, yc)),-1));
-                    if(c!=-1){
-    //                    long cConc = 0;
-                        long cDisc = 0;
-    //                    for (int xcConc = 0; xcConc < xc; xcConc++) {
-    //                        for (int ycConc = 0; ycConc < yc; ycConc++) {
-    //                            int c1 = (concDiscStripesX._2.getOrDefault((grid.getCellIdFromXcYc(xcConc, ycConc)),-1));
-    //                            if(c1!=-1){
-    //                                cConc = cConc + c1;
-    //                            }
-    //                        }
-    //                    }
+//            for (int xc = grid.getCellsInXAxis()-1; xc >= 0; xc--) {
+//                for (int yc = grid.getCellsInYAxis()-1; yc >= 0; yc--) {
+//                    int c = (concDiscStripesX._2.getOrDefault((grid.getCellIdFromXcYc(xc, yc)),-1));
+//                    if(c!=-1){
+//                        long cDisc = 0;
+//
+//                        for (int xcDisc = xc+1; xcDisc < grid.getCellsInXAxis(); xcDisc++) {
+//                            for (int ycDisc = 0; ycDisc < yc; ycDisc++) {
+//                                int c2 = (concDiscStripesX._2.getOrDefault((grid.getCellIdFromXcYc(xcDisc, ycDisc)),-1));
+//                                if(c2!=-1){
+//                                    cDisc = cDisc + c2;
+//                                }
+//                            }
+//                        }
+//                        concDiscStripesY[0] = concDiscStripesY[0] + cDisc*c;
+//                    }
+//                }
+//            }
 
-                        for (int xcDisc = xc+1; xcDisc < grid.getCellsInXAxis(); xcDisc++) {
-                            for (int ycDisc = 0; ycDisc < yc; ycDisc++) {
-                                int c2 = (concDiscStripesX._2.getOrDefault((grid.getCellIdFromXcYc(xcDisc, ycDisc)),-1));
-                                if(c2!=-1){
-                                    cDisc = cDisc + c2;
-                                }
-                            }
-                        }
-    //                    concDiscStripesY[0] = concDiscStripesY[0] + cConc*c;
-                        concDiscStripesY[0] = concDiscStripesY[0] + cDisc*c;
-                    }
-                }
-            }
+            concDiscStripesY[0] = concDiscStripesY[0] + Algorithms.discordantCells(concDiscStripesX._2, grid.getCellsInXAxis(), grid.getCellsInYAxis());
+
 
             long lineCount = 0;
             for (int value : concDiscStripesX._2.values()) {

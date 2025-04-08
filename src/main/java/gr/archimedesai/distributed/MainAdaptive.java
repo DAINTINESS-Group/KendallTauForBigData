@@ -14,6 +14,7 @@ import org.apache.spark.broadcast.Broadcast;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.storage.StorageLevel;
 import scala.Tuple2;
+import scala.reflect.ManifestFactory$;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -25,9 +26,13 @@ import java.util.stream.Stream;
 
 public class MainAdaptive {
     public static void main(String[] args) {
-
-        SparkConf sparkConf = new SparkConf().set("spark.serializer", "org.apache.spark.serializer.KryoSerializer").set("spark.kryo.registrationRequired", "true")
-                .registerKryoClasses(new Class[]{Object.class,AdaptiveGrid.class, HashMap.class, Point.class, Rectangle.class, Pair.class, java.lang.invoke.SerializedLambda.class, org.apache.spark.util.collection.CompactBuffer[].class, org.apache.spark.util.collection.CompactBuffer.class/*,scala.reflect.ManifestFactory$.MODULE$.Any().getClass()*/});
+        SparkConf sparkConf = null;
+        try {
+            sparkConf = new SparkConf().set("spark.serializer", "org.apache.spark.serializer.KryoSerializer").set("spark.kryo.registrationRequired", "true")
+                    .registerKryoClasses(new Class[]{Object.class, AdaptiveGrid.class, HashMap.class, Point.class, Rectangle.class, Pair.class, java.lang.invoke.SerializedLambda.class, org.apache.spark.util.collection.CompactBuffer[].class, org.apache.spark.util.collection.CompactBuffer.class, Class.forName("scala.reflect.ManifestFactory$ObjectManifest")/*,,scala.reflect.ManifestFactory.class*/});
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
         SparkSession sparkSession = SparkSession.builder().config(sparkConf)/*.master("local[2]")*/.getOrCreate();
         JavaSparkContext jsc = JavaSparkContext.fromSparkContext(sparkSession.sparkContext());
 //        CustomPartitioner partitioner = new CustomPartitioner(Integer.parseInt(args[11]));
@@ -190,37 +195,26 @@ public class MainAdaptive {
             long t2 = System.currentTimeMillis();
             concDiscStripesY[0] = concDiscStripesY[0] + concDiscStripesX._1[0];
             concDiscStripesY[1] = concDiscStripesY[1] + concDiscStripesX._1[1];
-    //        concDiscStripesY[2] = concDiscStripesY[2] + concDiscStripesX._1[2];
 
+//            for (int xc = grid.getCellsInXAxis()-1; xc >= 0; xc--) {
+//                for (int yc = grid.getCellsInYAxis()-1; yc >= 0; yc--) {
+//                    int c = (concDiscStripesX._2.getOrDefault((grid.getCellIdFromXcYc(xc, yc)),-1));
+//                    if(c!=-1){
+//                        long cDisc = 0;
+//                        for (int xcDisc = xc+1; xcDisc < grid.getCellsInXAxis(); xcDisc++) {
+//                            for (int ycDisc = 0; ycDisc < yc; ycDisc++) {
+//                                int c2 = (concDiscStripesX._2.getOrDefault((grid.getCellIdFromXcYc(xcDisc, ycDisc)),-1));
+//                                if(c2!=-1){
+//                                    cDisc = cDisc + c2;
+//                                }
+//                            }
+//                        }
+//                        concDiscStripesY[0] = concDiscStripesY[0] + cDisc*c;
+//                    }
+//                }
+//            }
 
-            for (int xc = grid.getCellsInXAxis()-1; xc >= 0; xc--) {
-                for (int yc = grid.getCellsInYAxis()-1; yc >= 0; yc--) {
-                    int c = (concDiscStripesX._2.getOrDefault((grid.getCellIdFromXcYc(xc, yc)),-1));
-                    if(c!=-1){
-    //                    long cConc = 0;
-                        long cDisc = 0;
-    //                    for (int xcConc = 0; xcConc < xc; xcConc++) {
-    //                        for (int ycConc = 0; ycConc < yc; ycConc++) {
-    //                            int c1 = (concDiscStripesX._2.getOrDefault((grid.getCellIdFromXcYc(xcConc, ycConc)),-1));
-    //                            if(c1!=-1){
-    //                                cConc = cConc + c1;
-    //                            }
-    //                        }
-    //                    }
-
-                        for (int xcDisc = xc+1; xcDisc < grid.getCellsInXAxis(); xcDisc++) {
-                            for (int ycDisc = 0; ycDisc < yc; ycDisc++) {
-                                int c2 = (concDiscStripesX._2.getOrDefault((grid.getCellIdFromXcYc(xcDisc, ycDisc)),-1));
-                                if(c2!=-1){
-                                    cDisc = cDisc + c2;
-                                }
-                            }
-                        }
-    //                    concDiscStripesY[0] = concDiscStripesY[0] + cConc*c;
-                        concDiscStripesY[0] = concDiscStripesY[0] + cDisc*c;
-                    }
-                }
-            }
+            concDiscStripesY[0] = concDiscStripesY[0] + Algorithms.discordantCells(concDiscStripesX._2, grid.getCellsInXAxis(), grid.getCellsInYAxis());
 
             long lineCount = 0;
             for (int value : concDiscStripesX._2.values()) {
@@ -260,8 +254,8 @@ public class MainAdaptive {
             }
 
             Path path = Paths.get(args[0]);
-            BufferedWriter bwCellsX = new BufferedWriter(new FileWriter("stripes-gridAdaptive-"+grid.getCellsInXAxis()+"-"+grid.getCellsInYAxis()+"-"+"stripesX-"+path.getFileName()));
-            BufferedWriter bwCellsY = new BufferedWriter(new FileWriter("stripes-gridAdaptive-"+grid.getCellsInXAxis()+"-"+grid.getCellsInYAxis()+"-"+"stripesY-"+path.getFileName()));
+            BufferedWriter bwCellsX = new BufferedWriter(new FileWriter("stripes-gridAdaptive-"+grid.getCellsInXAxis()+"-"+grid.getCellsInYAxis()+"-"+"X-"+path.getFileName()));
+            BufferedWriter bwCellsY = new BufferedWriter(new FileWriter("stripes-gridAdaptive-"+grid.getCellsInXAxis()+"-"+grid.getCellsInYAxis()+"-"+"Y-"+path.getFileName()));
 
 
             for (int xc = 0; xc < grid.getCellsInXAxis(); xc++) {

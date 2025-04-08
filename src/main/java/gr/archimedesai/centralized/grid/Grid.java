@@ -48,10 +48,10 @@ public class Grid {
         cells.get(cellId)[index] = pair;
     }
 
-    public void clearCounter(){
-        counter.clear();
-        counter = null;
-    }
+//    public void clearCounter(){
+//        counter.clear();
+//        counter = null;
+//    }
 
     public int getCellId(double x, double y) {
         int xc = (int) ((x-rectangle.getLowerBound().getX()) / this.x);

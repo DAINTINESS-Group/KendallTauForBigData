@@ -213,34 +213,26 @@ public class MainPerCell {
             concDiscStripesY[0] = concDiscStripesY[0] + concDiscStripesX._1[0];
             concDiscStripesY[1] = concDiscStripesY[1] + concDiscStripesX._1[1];
 
-            for (int xc = grid.getCellsInXAxis()-1; xc >= 0; xc--) {
-                for (int yc = grid.getCellsInYAxis()-1; yc >= 0; yc--) {
-                    int c = (concDiscStripesX._2.getOrDefault((grid.getCellIdFromXcYc(xc, yc)),-1));
-                    if(c!=-1){
-    //                    long cConc = 0;
-                        long cDisc = 0;
-    //                    for (int xcConc = 0; xcConc < xc; xcConc++) {
-    //                        for (int ycConc = 0; ycConc < yc; ycConc++) {
-    //                            int c1 = (concDiscStripesX._2.getOrDefault((grid.getCellIdFromXcYc(xcConc, ycConc)),-1));
-    //                            if(c1!=-1){
-    //                                cConc = cConc + c1;
-    //                            }
-    //                        }
-    //                    }
+//            for (int xc = grid.getCellsInXAxis()-1; xc >= 0; xc--) {
+//                for (int yc = grid.getCellsInYAxis()-1; yc >= 0; yc--) {
+//                    int c = (concDiscStripesX._2.getOrDefault((grid.getCellIdFromXcYc(xc, yc)),-1));
+//                    if(c!=-1){
+//                        long cDisc = 0;
+//
+//                        for (int xcDisc = xc+1; xcDisc < grid.getCellsInXAxis(); xcDisc++) {
+//                            for (int ycDisc = 0; ycDisc < yc; ycDisc++) {
+//                                int c2 = (concDiscStripesX._2.getOrDefault((grid.getCellIdFromXcYc(xcDisc, ycDisc)),-1));
+//                                if(c2!=-1){
+//                                    cDisc = cDisc + c2;
+//                                }
+//                            }
+//                        }
+//                        concDiscStripesY[0] = concDiscStripesY[0] + cDisc*c;
+//                    }
+//                }
+//            }
+            concDiscStripesY[0] = concDiscStripesY[0] + Algorithms.discordantCells(concDiscStripesX._2, grid.getCellsInXAxis(), grid.getCellsInYAxis());
 
-                        for (int xcDisc = xc+1; xcDisc < grid.getCellsInXAxis(); xcDisc++) {
-                            for (int ycDisc = 0; ycDisc < yc; ycDisc++) {
-                                int c2 = (concDiscStripesX._2.getOrDefault((grid.getCellIdFromXcYc(xcDisc, ycDisc)),-1));
-                                if(c2!=-1){
-                                    cDisc = cDisc + c2;
-                                }
-                            }
-                        }
-    //                    concDiscStripesY[0] = concDiscStripesY[0] + cConc*c;
-                        concDiscStripesY[0] = concDiscStripesY[0] + cDisc*c;
-                    }
-                }
-            }
 
             long lineCount = 0;
             for (int value : concDiscStripesX._2.values()) {

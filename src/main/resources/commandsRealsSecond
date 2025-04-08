@@ -1,111 +1,112 @@
 for j in $(seq 1 1 5); do
-        spark-submit --class gr.archimedesai.distributed.Main --master yarn --deploy-mode client --conf spark.yarn.archive="hdfs://node13:9000/user/spark-jars.tar.gz" --executor-memory 4608m --executor-cores 2 --driver-memory 5g --num-executors 12 --conf spark.network.timeout=600s parallel-kendalls-tau-1.0-SNAPSHOT.jar hdfs://node13:9000/user/user/kendall-tau/ookla-small.csv 0 1 , 1.0 1.0 3932586.0 873594.0 5 5 timeExec-grid-results-distributed-ookla${j}.txt 192
-        spark-submit --class gr.archimedesai.distributed.Main --master yarn --deploy-mode client --conf spark.yarn.archive="hdfs://node13:9000/user/spark-jars.tar.gz" --executor-memory 4608m --executor-cores 2 --driver-memory 5g --num-executors 12 --conf spark.network.timeout=600s parallel-kendalls-tau-1.0-SNAPSHOT.jar hdfs://node13:9000/user/user/kendall-tau/taxi-small.csv 1 2 , 0.0 0.0 351613.4 1000004.0 5 5 timeExec-grid-results-distributed-taxi${j}.txt 192
-        spark-submit --class gr.archimedesai.distributed.Main --master yarn --deploy-mode client --conf spark.yarn.archive="hdfs://node13:9000/user/spark-jars.tar.gz" --executor-memory 4608m --executor-cores 2 --driver-memory 5g --num-executors 12 --conf spark.network.timeout=600s parallel-kendalls-tau-1.0-SNAPSHOT.jar hdfs://node13:9000/user/user/kendall-tau/weather-small.csv 1 2 , 0.0 0.0 2238 100.1 5 5 timeExec-grid-results-distributed-weather${j}.txt 192
-        spark-submit --class gr.archimedesai.distributed.Main --master yarn --deploy-mode client --conf spark.yarn.archive="hdfs://node13:9000/user/spark-jars.tar.gz" --executor-memory 4608m --executor-cores 2 --driver-memory 5g --num-executors 12 --conf spark.network.timeout=600s parallel-kendalls-tau-1.0-SNAPSHOT.jar hdfs://node13:9000/user/user/kendall-tau/radiation-small.csv 1 2 , -99.0 0.0 353.2 1351.1 5 5 timeExec-grid-results-distributed-radiation${j}.txt 192
-    for i in $(seq 10 10 100); do
-        spark-submit --class gr.archimedesai.distributed.Main --master yarn --deploy-mode client --conf spark.yarn.archive="hdfs://node13:9000/user/spark-jars.tar.gz" --executor-memory 4608m --executor-cores 2 --driver-memory 5g --num-executors 12 --conf spark.network.timeout=600s parallel-kendalls-tau-1.0-SNAPSHOT.jar hdfs://node13:9000/user/user/kendall-tau/ookla-small.csv 0 1 , 1.0 1.0 3932586.0 873594.0 "$i" "$i" timeExec-grid-results-distributed-ookla${j}.txt 192
+        spark-submit --class gr.archimedesai.distributed.Main --master yarn --deploy-mode client --conf spark.yarn.archive="hdfs://node13:9000/user/spark-jars.tar.gz" --executor-memory 4608m --executor-cores 2 --driver-memory 5g --num-executors 12 --conf spark.network.timeout=600s parallel-kendalls-tau-1.0-SNAPSHOT.jar hdfs://node13:9000/user/user/kendall-tau/ookla-small.csv 0 1 , 1.0 1.0 3932586.0 873594.0 5 5 timeExec-grid-distributed-ookla${j}.txt 192
+        spark-submit --class gr.archimedesai.distributed.Main --master yarn --deploy-mode client --conf spark.yarn.archive="hdfs://node13:9000/user/spark-jars.tar.gz" --executor-memory 4608m --executor-cores 2 --driver-memory 5g --num-executors 12 --conf spark.network.timeout=600s parallel-kendalls-tau-1.0-SNAPSHOT.jar hdfs://node13:9000/user/user/kendall-tau/taxi-small.csv 1 2 , 0.0 0.0 351613.4 1000004.0 5 5 timeExec-grid-distributed-taxi${j}.txt 192
+        spark-submit --class gr.archimedesai.distributed.Main --master yarn --deploy-mode client --conf spark.yarn.archive="hdfs://node13:9000/user/spark-jars.tar.gz" --executor-memory 4608m --executor-cores 2 --driver-memory 5g --num-executors 12 --conf spark.network.timeout=600s parallel-kendalls-tau-1.0-SNAPSHOT.jar hdfs://node13:9000/user/user/kendall-tau/weather-small.csv 1 2 , 0.0 0.0 2238 100.1 5 5 timeExec-grid-distributed-weather${j}.txt 192
+        spark-submit --class gr.archimedesai.distributed.Main --master yarn --deploy-mode client --conf spark.yarn.archive="hdfs://node13:9000/user/spark-jars.tar.gz" --executor-memory 4608m --executor-cores 2 --driver-memory 5g --num-executors 12 --conf spark.network.timeout=600s parallel-kendalls-tau-1.0-SNAPSHOT.jar hdfs://node13:9000/user/user/kendall-tau/radiation-small.csv 1 2 , -99.0 0.0 353.2 1351.1 5 5 timeExec-grid-distributed-radiation${j}.txt 192
+    for i in 25 50 100 200 400; do
+        spark-submit --class gr.archimedesai.distributed.Main --master yarn --deploy-mode client --conf spark.yarn.archive="hdfs://node13:9000/user/spark-jars.tar.gz" --executor-memory 4608m --executor-cores 2 --driver-memory 5g --num-executors 12 --conf spark.network.timeout=600s parallel-kendalls-tau-1.0-SNAPSHOT.jar hdfs://node13:9000/user/user/kendall-tau/ookla-small.csv 0 1 , 1.0 1.0 3932586.0 873594.0 "$i" "$i" timeExec-grid-distributed-ookla${j}.txt 192
     done
 
-    for i in $(seq 10 10 100); do
-        spark-submit --class gr.archimedesai.distributed.Main --master yarn --deploy-mode client --conf spark.yarn.archive="hdfs://node13:9000/user/spark-jars.tar.gz" --executor-memory 4608m --executor-cores 2 --driver-memory 5g --num-executors 12 --conf spark.network.timeout=600s parallel-kendalls-tau-1.0-SNAPSHOT.jar hdfs://node13:9000/user/user/kendall-tau/taxi-small.csv 1 2 , 0.0 0.0 351613.4 1000004.0 "$i" "$i" timeExec-grid-results-distributed-taxi${j}.txt 192
+    for i in 25 50 100 200 400; do
+        spark-submit --class gr.archimedesai.distributed.Main --master yarn --deploy-mode client --conf spark.yarn.archive="hdfs://node13:9000/user/spark-jars.tar.gz" --executor-memory 4608m --executor-cores 2 --driver-memory 5g --num-executors 12 --conf spark.network.timeout=600s parallel-kendalls-tau-1.0-SNAPSHOT.jar hdfs://node13:9000/user/user/kendall-tau/taxi-small.csv 1 2 , 0.0 0.0 351613.4 1000004.0 "$i" "$i" timeExec-grid-distributed-taxi${j}.txt 192
     done
 
-    for i in $(seq 10 10 100); do
-        spark-submit --class gr.archimedesai.distributed.Main --master yarn --deploy-mode client --conf spark.yarn.archive="hdfs://node13:9000/user/spark-jars.tar.gz" --executor-memory 4608m --executor-cores 2 --driver-memory 5g --num-executors 12 --conf spark.network.timeout=600s parallel-kendalls-tau-1.0-SNAPSHOT.jar hdfs://node13:9000/user/user/kendall-tau/weather-small.csv 1 2 , 0.0 0.0 2238 100.1 "$i" "$i" timeExec-grid-results-distributed-weather${j}.txt 192
+    for i in 25 50 100 200 400; do
+        spark-submit --class gr.archimedesai.distributed.Main --master yarn --deploy-mode client --conf spark.yarn.archive="hdfs://node13:9000/user/spark-jars.tar.gz" --executor-memory 4608m --executor-cores 2 --driver-memory 5g --num-executors 12 --conf spark.network.timeout=600s parallel-kendalls-tau-1.0-SNAPSHOT.jar hdfs://node13:9000/user/user/kendall-tau/weather-small.csv 1 2 , 0.0 0.0 2238 100.1 "$i" "$i" timeExec-grid-distributed-weather${j}.txt 192
     done
 
-    for i in $(seq 10 10 100); do
-        spark-submit --class gr.archimedesai.distributed.Main --master yarn --deploy-mode client --conf spark.yarn.archive="hdfs://node13:9000/user/spark-jars.tar.gz" --executor-memory 4608m --executor-cores 2 --driver-memory 5g --num-executors 12 --conf spark.network.timeout=600s parallel-kendalls-tau-1.0-SNAPSHOT.jar hdfs://node13:9000/user/user/kendall-tau/radiation-small.csv 1 2 , -99.0 0.0 353.2 1351.1 "$i" "$i" timeExec-grid-results-distributed-radiation${j}.txt 192
+    for i in 25 50 100 200 400; do
+        spark-submit --class gr.archimedesai.distributed.Main --master yarn --deploy-mode client --conf spark.yarn.archive="hdfs://node13:9000/user/spark-jars.tar.gz" --executor-memory 4608m --executor-cores 2 --driver-memory 5g --num-executors 12 --conf spark.network.timeout=600s parallel-kendalls-tau-1.0-SNAPSHOT.jar hdfs://node13:9000/user/user/kendall-tau/radiation-small.csv 1 2 , -99.0 0.0 353.2 1351.1 "$i" "$i" timeExec-grid-distributed-radiation${j}.txt 192
     done
 done
 
 for j in $(seq 1 1 5); do
-        spark-submit --class gr.archimedesai.distributed.MainAdaptive --master yarn --deploy-mode client --conf spark.yarn.archive="hdfs://node13:9000/user/spark-jars.tar.gz" --executor-memory 4608m --executor-cores 2 --driver-memory 5g --num-executors 12 --conf spark.network.timeout=600s parallel-kendalls-tau-1.0-SNAPSHOT.jar hdfs://node13:9000/user/user/kendall-tau/ookla-small.csv 0 1 , 1.0 1.0 3932586.0 873594.0 5 5 timeExec-grid-results-distributed-ookla${j}.txt 192 data/samples/ookla-small.csv
-        spark-submit --class gr.archimedesai.distributed.MainAdaptive --master yarn --deploy-mode client --conf spark.yarn.archive="hdfs://node13:9000/user/spark-jars.tar.gz" --executor-memory 4608m --executor-cores 2 --driver-memory 5g --num-executors 12 --conf spark.network.timeout=600s parallel-kendalls-tau-1.0-SNAPSHOT.jar hdfs://node13:9000/user/user/kendall-tau/taxi-small.csv 1 2 , 0.0 0.0 351613.4 1000004.0 5 5 timeExec-grid-results-distributed-taxi${j}.txt 192 data/samples/taxi-small.csv
-        spark-submit --class gr.archimedesai.distributed.MainAdaptive --master yarn --deploy-mode client --conf spark.yarn.archive="hdfs://node13:9000/user/spark-jars.tar.gz" --executor-memory 4608m --executor-cores 2 --driver-memory 5g --num-executors 12 --conf spark.network.timeout=600s parallel-kendalls-tau-1.0-SNAPSHOT.jar hdfs://node13:9000/user/user/kendall-tau/weather-small.csv 1 2 , 0.0 0.0 2238 100.1 5 5 timeExec-grid-results-distributed-weather${j}.txt 192 data/samples/weather-small.csv
-        spark-submit --class gr.archimedesai.distributed.MainAdaptive --master yarn --deploy-mode client --conf spark.yarn.archive="hdfs://node13:9000/user/spark-jars.tar.gz" --executor-memory 4608m --executor-cores 2 --driver-memory 5g --num-executors 12 --conf spark.network.timeout=600s parallel-kendalls-tau-1.0-SNAPSHOT.jar hdfs://node13:9000/user/user/kendall-tau/radiation-small.csv 1 2 , -99.0 0.0 353.2 1351.1 5 5 timeExec-grid-results-distributed-radiation${j}.txt 192 data/samples/radiation-small.csv
-    for i in $(seq 10 10 100); do
-        spark-submit --class gr.archimedesai.distributed.MainAdaptive --master yarn --deploy-mode client --conf spark.yarn.archive="hdfs://node13:9000/user/spark-jars.tar.gz" --executor-memory 4608m --executor-cores 2 --driver-memory 5g --num-executors 12 --conf spark.network.timeout=600s parallel-kendalls-tau-1.0-SNAPSHOT.jar hdfs://node13:9000/user/user/kendall-tau/ookla-small.csv 0 1 , 1.0 1.0 3932586.0 873594.0 "$i" "$i" timeExec-grid-results-distributed-ookla${j}.txt 192 data/samples/ookla-small.csv
+        spark-submit --class gr.archimedesai.distributed.MainAdaptive --master yarn --deploy-mode client --conf spark.yarn.archive="hdfs://node13:9000/user/spark-jars.tar.gz" --executor-memory 4608m --executor-cores 2 --driver-memory 5g --num-executors 12 --conf spark.network.timeout=600s parallel-kendalls-tau-1.0-SNAPSHOT.jar hdfs://node13:9000/user/user/kendall-tau/ookla-small.csv 0 1 , 1.0 1.0 3932586.0 873594.0 5 5 timeExec-grid-distributed-ookla${j}.txt 192 data/samples/ookla-small.csv
+        spark-submit --class gr.archimedesai.distributed.MainAdaptive --master yarn --deploy-mode client --conf spark.yarn.archive="hdfs://node13:9000/user/spark-jars.tar.gz" --executor-memory 4608m --executor-cores 2 --driver-memory 5g --num-executors 12 --conf spark.network.timeout=600s parallel-kendalls-tau-1.0-SNAPSHOT.jar hdfs://node13:9000/user/user/kendall-tau/taxi-small.csv 1 2 , 0.0 0.0 351613.4 1000004.0 5 5 timeExec-grid-distributed-taxi${j}.txt 192 data/samples/taxi-small.csv
+        spark-submit --class gr.archimedesai.distributed.MainAdaptive --master yarn --deploy-mode client --conf spark.yarn.archive="hdfs://node13:9000/user/spark-jars.tar.gz" --executor-memory 4608m --executor-cores 2 --driver-memory 5g --num-executors 12 --conf spark.network.timeout=600s parallel-kendalls-tau-1.0-SNAPSHOT.jar hdfs://node13:9000/user/user/kendall-tau/weather-small.csv 1 2 , 0.0 0.0 2238 100.1 5 5 timeExec-grid-distributed-weather${j}.txt 192 data/samples/weather-small.csv
+        spark-submit --class gr.archimedesai.distributed.MainAdaptive --master yarn --deploy-mode client --conf spark.yarn.archive="hdfs://node13:9000/user/spark-jars.tar.gz" --executor-memory 4608m --executor-cores 2 --driver-memory 5g --num-executors 12 --conf spark.network.timeout=600s parallel-kendalls-tau-1.0-SNAPSHOT.jar hdfs://node13:9000/user/user/kendall-tau/radiation-small.csv 1 2 , -99.0 0.0 353.2 1351.1 5 5 timeExec-grid-distributed-radiation${j}.txt 192 data/samples/radiation-small.csv
+    for i in 25 50 100 200 400; do
+        spark-submit --class gr.archimedesai.distributed.MainAdaptive --master yarn --deploy-mode client --conf spark.yarn.archive="hdfs://node13:9000/user/spark-jars.tar.gz" --executor-memory 4608m --executor-cores 2 --driver-memory 5g --num-executors 12 --conf spark.network.timeout=600s parallel-kendalls-tau-1.0-SNAPSHOT.jar hdfs://node13:9000/user/user/kendall-tau/ookla-small.csv 0 1 , 1.0 1.0 3932586.0 873594.0 "$i" "$i" timeExec-grid-distributed-ookla${j}.txt 192 data/samples/ookla-small.csv
     done
 
-    for i in $(seq 10 10 100); do
-        spark-submit --class gr.archimedesai.distributed.MainAdaptive --master yarn --deploy-mode client --conf spark.yarn.archive="hdfs://node13:9000/user/spark-jars.tar.gz" --executor-memory 4608m --executor-cores 2 --driver-memory 5g --num-executors 12 --conf spark.network.timeout=600s parallel-kendalls-tau-1.0-SNAPSHOT.jar hdfs://node13:9000/user/user/kendall-tau/taxi-small.csv 1 2 , 0.0 0.0 351613.4 1000004.0 "$i" "$i" timeExec-grid-results-distributed-taxi${j}.txt 192 data/samples/taxi-small.csv
+    for i in 25 50 100 200 400; do
+        spark-submit --class gr.archimedesai.distributed.MainAdaptive --master yarn --deploy-mode client --conf spark.yarn.archive="hdfs://node13:9000/user/spark-jars.tar.gz" --executor-memory 4608m --executor-cores 2 --driver-memory 5g --num-executors 12 --conf spark.network.timeout=600s parallel-kendalls-tau-1.0-SNAPSHOT.jar hdfs://node13:9000/user/user/kendall-tau/taxi-small.csv 1 2 , 0.0 0.0 351613.4 1000004.0 "$i" "$i" timeExec-grid-distributed-taxi${j}.txt 192 data/samples/taxi-small.csv
     done
 
-    for i in $(seq 10 10 100); do
-        spark-submit --class gr.archimedesai.distributed.MainAdaptive --master yarn --deploy-mode client --conf spark.yarn.archive="hdfs://node13:9000/user/spark-jars.tar.gz" --executor-memory 4608m --executor-cores 2 --driver-memory 5g --num-executors 12 --conf spark.network.timeout=600s parallel-kendalls-tau-1.0-SNAPSHOT.jar hdfs://node13:9000/user/user/kendall-tau/weather-small.csv 1 2 , 0.0 0.0 2238 100.1 "$i" "$i" timeExec-grid-results-distributed-weather${j}.txt 192 data/samples/weather-small.csv
+    for i in 25 50 100 200 400; do
+        spark-submit --class gr.archimedesai.distributed.MainAdaptive --master yarn --deploy-mode client --conf spark.yarn.archive="hdfs://node13:9000/user/spark-jars.tar.gz" --executor-memory 4608m --executor-cores 2 --driver-memory 5g --num-executors 12 --conf spark.network.timeout=600s parallel-kendalls-tau-1.0-SNAPSHOT.jar hdfs://node13:9000/user/user/kendall-tau/weather-small.csv 1 2 , 0.0 0.0 2238 100.1 "$i" "$i" timeExec-grid-distributed-weather${j}.txt 192 data/samples/weather-small.csv
     done
 
-    for i in $(seq 10 10 100); do
-        spark-submit --class gr.archimedesai.distributed.MainAdaptive --master yarn --deploy-mode client --conf spark.yarn.archive="hdfs://node13:9000/user/spark-jars.tar.gz" --executor-memory 4608m --executor-cores 2 --driver-memory 5g --num-executors 12 --conf spark.network.timeout=600s parallel-kendalls-tau-1.0-SNAPSHOT.jar hdfs://node13:9000/user/user/kendall-tau/radiation-small.csv 1 2 , -99.0 0.0 353.2 1351.1 "$i" "$i" timeExec-grid-results-distributed-radiation${j}.txt 192 data/samples/radiation-small.csv
+    for i in 25 50 100 200 400; do
+        spark-submit --class gr.archimedesai.distributed.MainAdaptive --master yarn --deploy-mode client --conf spark.yarn.archive="hdfs://node13:9000/user/spark-jars.tar.gz" --executor-memory 4608m --executor-cores 2 --driver-memory 5g --num-executors 12 --conf spark.network.timeout=600s parallel-kendalls-tau-1.0-SNAPSHOT.jar hdfs://node13:9000/user/user/kendall-tau/radiation-small.csv 1 2 , -99.0 0.0 353.2 1351.1 "$i" "$i" timeExec-grid-distributed-radiation${j}.txt 192 data/samples/radiation-small.csv
     done
 done
 
 
 
 for j in $(seq 1 1 5); do
-        java -Xmx4608m -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainGrid data/ookla-small.csv 0 1 , 1.0 1.0 3932586.0 873594.0 5 5 timeExec-grid-results-ookla${j}.txt
-        java -Xmx4608m -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainGrid data/taxi-small.csv 1 2 , 0.0 0.0 351613.4 1000004.0 5 5 timeExec-grid-results-taxi${j}.txt
-        java -Xmx4608m -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainGrid data/weather-small.csv 1 2 , 0.0 0.0 2238 100.1 5 5 timeExec-grid-results-weather${j}.txt
-        java -Xmx4608m -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainGrid data/radiation-small.csv 1 2 , -99.0 0.0 353.2 1351.1 5 5 timeExec-grid-results-radiation${j}.txt
-    for i in $(seq 10 10 100); do
-        java -Xmx4608m -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainGrid data/ookla-small.csv 0 1 , 1.0 1.0 3932586.0 873594.0 "$i" "$i" timeExec-grid-results-ookla${j}.txt
+        java -Xmx4608m -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainGrid data/ookla-small.csv 0 1 , 1.0 1.0 3932586.0 873594.0 5 5 timeExec-grid-ookla${j}.txt
+        java -Xmx4608m -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainGrid data/taxi-small.csv 1 2 , 0.0 0.0 351613.4 1000004.0 5 5 timeExec-grid-taxi${j}.txt
+        java -Xmx4608m -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainGrid data/weather-small.csv 1 2 , 0.0 0.0 2238 100.1 5 5 timeExec-grid-weather${j}.txt
+        java -Xmx4608m -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainGrid data/radiation-small.csv 1 2 , -99.0 0.0 353.2 1351.1 5 5 timeExec-grid-radiation${j}.txt
+    for i in 25 50 100 200 400; do
+        java -Xmx4608m -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainGrid data/ookla-small.csv 0 1 , 1.0 1.0 3932586.0 873594.0 "$i" "$i" timeExec-grid-ookla${j}.txt
     done
 
-    for i in $(seq 10 10 100); do
-        java -Xmx4608m -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainGrid data/taxi-small.csv 1 2 , 0.0 0.0 351613.4 1000004.0 "$i" "$i" timeExec-grid-results-taxi${j}.txt
+    for i in 25 50 100 200 400; do
+        java -Xmx4608m -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainGrid data/taxi-small.csv 1 2 , 0.0 0.0 351613.4 1000004.0 "$i" "$i" timeExec-grid-taxi${j}.txt
     done
 
-    for i in $(seq 10 10 100); do
-        java -Xmx4608m -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainGrid data/weather-small.csv 1 2 , 0.0 0.0 2238 100.1 "$i" "$i" timeExec-grid-results-weather${j}.txt
+    for i in 25 50 100 200 400; do
+        java -Xmx4608m -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainGrid data/weather-small.csv 1 2 , 0.0 0.0 2238 100.1 "$i" "$i" timeExec-grid-weather${j}.txt
     done
 
-    for i in $(seq 10 10 100); do
-        java -Xmx4608m -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainGrid data/radiation-small.csv 1 2 , -99.0 0.0 353.2 1351.1 "$i" "$i" timeExec-grid-results-radiation${j}.txt
+    for i in 25 50 100 200 400; do
+        java -Xmx4608m -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainGrid data/radiation-small.csv 1 2 , -99.0 0.0 353.2 1351.1 "$i" "$i" timeExec-grid-radiation${j}.txt
     done
 done
 
 
 for j in $(seq 1 1 5); do
-        java -Xmx4608m -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainAdaptiveGrid data/ookla-small.csv 0 1 , 1.0 1.0 3932586.0 873594.0 5 5 timeExec-gridAdaptive-results-ookla${j}.txt data/samples/ookla-small.csv
-        java -Xmx4608m -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainAdaptiveGrid data/taxi-small.csv 1 2 , 0.0 0.0 351613.4 1000004.0 5 5 timeExec-gridAdaptive-results-taxi${j}.txt data/samples/taxi-small.csv
-        java -Xmx4608m -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainAdaptiveGrid data/weather-small.csv 1 2 , 0.0 0.0 2238 100.1 5 5 timeExec-gridAdaptive-results-weather${j}.txt data/samples/weather-small.csv
-        java -Xmx4608m -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainAdaptiveGrid data/radiation-small.csv 1 2 , -99.0 0.0 353.2 1351.1 5 5 timeExec-gridAdaptive-results-radiation${j}.txt data/samples/radiation-small.csv
-    for i in $(seq 10 10 100); do
-        java -Xmx4608m -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainAdaptiveGrid data/ookla-small.csv 0 1 , 1.0 1.0 3932586.0 873594.0 "$i" "$i" timeExec-gridAdaptive-results-ookla${j}.txt data/samples/ookla-small.csv
+        java -Xmx4608m -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainAdaptiveGrid data/ookla-small.csv 0 1 , 1.0 1.0 3932586.0 873594.0 5 5 timeExec-gridAdaptive-ookla${j}.txt data/samples/ookla-small.csv
+        java -Xmx4608m -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainAdaptiveGrid data/taxi-small.csv 1 2 , 0.0 0.0 351613.4 1000004.0 5 5 timeExec-gridAdaptive-taxi${j}.txt data/samples/taxi-small.csv
+        java -Xmx4608m -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainAdaptiveGrid data/weather-small.csv 1 2 , 0.0 0.0 2238 100.1 5 5 timeExec-gridAdaptive-weather${j}.txt data/samples/weather-small.csv
+        java -Xmx4608m -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainAdaptiveGrid data/radiation-small.csv 1 2 , -99.0 0.0 353.2 1351.1 5 5 timeExec-gridAdaptive-radiation${j}.txt data/samples/radiation-small.csv
+    for i in 25 50 100 200 400; do
+        java -Xmx4608m -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainAdaptiveGrid data/ookla-small.csv 0 1 , 1.0 1.0 3932586.0 873594.0 "$i" "$i" timeExec-gridAdaptive-ookla${j}.txt data/samples/ookla-small.csv
     done
 
-    for i in $(seq 10 10 100); do
-        java -Xmx4608m -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainAdaptiveGrid data/taxi-small.csv 1 2 , 0.0 0.0 351613.4 1000004.0 "$i" "$i" timeExec-gridAdaptive-results-taxi${j}.txt data/samples/taxi-small.csv
+    for i in 25 50 100 200 400; do
+        java -Xmx4608m -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainAdaptiveGrid data/taxi-small.csv 1 2 , 0.0 0.0 351613.4 1000004.0 "$i" "$i" timeExec-gridAdaptive-taxi${j}.txt data/samples/taxi-small.csv
     done
 
-    for i in $(seq 10 10 100); do
-        java -Xmx4608m -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainAdaptiveGrid data/weather-small.csv 1 2 , 0.0 0.0 2238 100.1 "$i" "$i" timeExec-gridAdaptive-results-weather${j}.txt data/samples/weather-small.csv
+    for i in 25 50 100 200 400; do
+        java -Xmx4608m -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainAdaptiveGrid data/weather-small.csv 1 2 , 0.0 0.0 2238 100.1 "$i" "$i" timeExec-gridAdaptive-weather${j}.txt data/samples/weather-small.csv
     done
 
-    for i in $(seq 10 10 100); do
-        java -Xmx4608m -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainAdaptiveGrid data/radiation-small.csv 1 2 , -99.0 0.0 353.2 1351.1 "$i" "$i" timeExec-gridAdaptive-results-radiation${j}.txt data/samples/radiation-small.csv
+    for i in 25 50 100 200 400; do
+        java -Xmx4608m -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainAdaptiveGrid data/radiation-small.csv 1 2 , -99.0 0.0 353.2 1351.1 "$i" "$i" timeExec-gridAdaptive-radiation${j}.txt data/samples/radiation-small.csv
     done
 done
 
 
 
 
+
 for i in $(seq 1 1 5); do
-    java -Xmx4608m -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainArray data/ookla-small.csv 0 1 , timeExec-knight-results-ookla.txt
+    java -Xmx4608m -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainArray data/ookla-small.csv 0 1 , timeExec-knight-ookla.txt
 done
 
 for i in $(seq 1 1 5); do
-    java -Xmx4608m -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainArray data/taxi-small.csv 1 2 , timeExec-knight-results-taxi.txt
+    java -Xmx4608m -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainArray data/taxi-small.csv 1 2 , timeExec-knight-taxi.txt
 done
 
 for i in $(seq 1 1 5); do
-    java -Xmx4608m -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainArray data/weather-small.csv 1 2 , timeExec-knight-results-weather.txt
+    java -Xmx4608m -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainArray data/weather-small.csv 1 2 , timeExec-knight-weather.txt
 done
 
 for i in $(seq 1 1 5); do
-    java -Xmx4608m -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainArray data/radiation-small.csv 1 2 , timeExec-knight-results-radiation.txt
+    java -Xmx4608m -cp parallel-kendalls-tau-1.0-SNAPSHOT.jar:lib/* gr.archimedesai.centralized.MainArray data/radiation-small.csv 1 2 , timeExec-knight-radiation.txt
 done
 
 

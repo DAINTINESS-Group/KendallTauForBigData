@@ -3,11 +3,11 @@ package gr.archimedesai.centralized.grid;
 import gr.archimedesai.Pair;
 import gr.archimedesai.algorithms.Algorithms;
 import gr.archimedesai.shapes.Rectangle;
+import scala.Tuple2;
 
 import java.util.*;
-import java.util.stream.DoubleStream;
 
-public class AdaptiveGrid {
+public class AdaptiveGridAggregated {
 
     private final Rectangle rectangle;
     private final double[] splitsX;
@@ -18,7 +18,10 @@ public class AdaptiveGrid {
     private HashMap<Integer, Integer> counter;
     private HashMap<Integer, Pair[]> cells;
 
-    private AdaptiveGrid(Rectangle rectangle, int cellsInXAxis, int cellsInYAxis, List<Pair> samples){
+    private HashMap<Integer, Tuple2<double[], long[]>> aggregatedValuesX;
+    private HashMap<Integer, Tuple2<double[], long[]>> aggregatedValuesY;
+
+    private AdaptiveGridAggregated(Rectangle rectangle, int cellsInXAxis, int cellsInYAxis, List<Pair> samples){
         this.rectangle = rectangle;
         this.cellsInXAxis = cellsInXAxis;
         this.cellsInYAxis = cellsInYAxis;
@@ -163,10 +166,10 @@ public class AdaptiveGrid {
         return result;
     }
 
-    public static AdaptiveGrid newAdaptiveGrid(Rectangle rectangle, int cellsInXAxis, int cellsInYAxis, List<Pair> samples){
+    public static AdaptiveGridAggregated newAdaptiveGridAggregated(Rectangle rectangle, int cellsInXAxis, int cellsInYAxis, List<Pair> samples){
         System.out.println("Cells in X axis:"+ cellsInXAxis);
         System.out.println("Cells in Y axis:"+ cellsInYAxis);
-        return new AdaptiveGrid(rectangle, cellsInXAxis, cellsInYAxis, samples);
+        return new AdaptiveGridAggregated(rectangle, cellsInXAxis, cellsInYAxis, samples);
     }
 
     public int getCellsInXAxis(){
@@ -260,8 +263,144 @@ public class AdaptiveGrid {
         });
     }
 
+    public void aggregateValuesOnX(){
+        aggregatedValuesX = new HashMap<>(((int)Math.ceil(cells.size() / 0.75)));
+        cells.forEach((k,v)->{
+            int distinctCount = 1;
+            for (int i = 1; i < v.length; i++) {
+                if (Double.compare(v[i].getX(), v[i - 1].getX())!=0) {
+                    distinctCount++;
+                }
+            }
+
+            double[] values = new double[distinctCount];
+            long[] valuesFreq = new long[distinctCount];
+//            values[0][0] = v[0].getX();
+//            values[0][1] = distinctCount;
+//            int position = 1;
+//
+//            int valueDistinct = 1;
+//            for (int i = 1; i < v.length; i++) {
+//                if (Double.compare(v[i].getX(), v[i - 1].getX())!=0) {
+//                    distinctCount = distinctCount-valueDistinct;
+//                    values[position][0] = v[i].getX();
+//                    values[position][1] = distinctCount;
+//                    position++;
+//                    valueDistinct = 1;
+//                }else{
+//                    valueDistinct++;
+//                }
+//            }
+
+            values[0] = v[0].getX();
+            valuesFreq[0] = v.length;
+            int position = 1;
+
+            int valueDistinct = 1;
+            for (int i = 1; i < v.length; i++) {
+                if (Double.compare(v[i].getX(), v[i - 1].getX())!=0) {
+                    values[position] = v[i].getX();
+                    valuesFreq[position] = valuesFreq[position-1]-valueDistinct;
+                    position++;
+                    valueDistinct = 1;
+                }else{
+                    valueDistinct++;
+                }
+            }
+            aggregatedValuesX.put(k, Tuple2.apply(values, valuesFreq));
+        });
+    }
+
+    public void aggregateValuesOnY(){
+        aggregatedValuesY = new HashMap<>(((int)Math.ceil(cells.size() / 0.75)));
+        cells.forEach((k,v)->{
+            int distinctCount = 1;
+            for (int i = 1; i < v.length; i++) {
+                if (Double.compare(v[i].getY(), v[i - 1].getY())!=0) {
+                    distinctCount++;
+                }
+            }
+
+            double[] values = new double[distinctCount];
+            long[] valuesFreq = new long[distinctCount];
+//            values[0][0] = v[0].getX();
+//            values[0][1] = distinctCount;
+//            int position = 1;
+//
+//            int valueDistinct = 1;
+//            for (int i = 1; i < v.length; i++) {
+//                if (Double.compare(v[i].getX(), v[i - 1].getX())!=0) {
+//                    distinctCount = distinctCount-valueDistinct;
+//                    values[position][0] = v[i].getX();
+//                    values[position][1] = distinctCount;
+//                    position++;
+//                    valueDistinct = 1;
+//                }else{
+//                    valueDistinct++;
+//                }
+//            }
+
+            values[0] = v[0].getY();
+            valuesFreq[0] = v.length;
+            int position = 1;
+
+            int valueDistinct = 1;
+            for (int i = 1; i < v.length; i++) {
+                if (Double.compare(v[i].getY(), v[i - 1].getY())!=0) {
+                    values[position] = v[i].getY();
+                    valuesFreq[position] = valuesFreq[position-1]-valueDistinct;
+                    position++;
+                    valueDistinct = 1;
+                }else{
+                    valueDistinct++;
+                }
+            }
+            aggregatedValuesY.put(k, Tuple2.apply(values, valuesFreq));
+        });
+    }
+
+//    public void aggregateValuesOnY(){
+//        aggregatedValuesY = new HashMap<>(((int)Math.ceil(cells.size() / 0.75)));
+//        cells.forEach((k,v)->{
+//            int distinctCount = 1;
+//            for (int i = 1; i < v.length; i++) {
+//                if (Double.compare(v[i].getY(), v[i - 1].getY())!=0) {
+//                    distinctCount++;
+//                }
+//            }
+//
+//            double[][] values = new double[distinctCount][2];
+//
+//            distinctCount = 1;
+//            values[0][0] = v[0].getY();
+//            int position = 0;
+//
+//            for (int i = 1; i < v.length; i++) {
+//                if (Double.compare(v[i].getY(), v[i - 1].getY())!=0) {
+//                    values[position][1] = distinctCount;
+//                    values[position+1][0] = v[i].getY();
+//                    position++;
+//                    distinctCount = 1;
+//                }else{
+//                    distinctCount++;
+//                }
+//            }
+//            values[position][1] = distinctCount;
+//            aggregatedValuesY.put(k, values);
+//        });
+//    }
+
+
     public Map<Integer, Pair[]> getCells() {
         return cells;
+    }
+
+    public Map<Integer, Tuple2<double[],long[]>> getAggregatedValuesX() {
+        return aggregatedValuesX;
+    }
+
+    public Map<Integer, Tuple2<double[],long[]>> getAggregatedValuesY() {
+        return aggregatedValuesY;
     }
 
     public String cellsStats() {
@@ -279,7 +418,4 @@ public class AdaptiveGrid {
         double stdDev = Math.sqrt(variance);
         return cells.size()+","+(int) min + "," +(int) max + "," + stdDev;
     }
-
-
-
 }
