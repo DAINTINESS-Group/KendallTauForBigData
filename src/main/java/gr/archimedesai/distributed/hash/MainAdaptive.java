@@ -1,8 +1,8 @@
-package gr.archimedesai.distributed;
+package gr.archimedesai.distributed.hash;
 
 import gr.archimedesai.Pair;
 import gr.archimedesai.algorithms.Algorithms;
-import gr.archimedesai.centralized.grid.Cell;
+import gr.archimedesai.distributed.SparkLogParser;
 import gr.archimedesai.distributed.grid.AdaptiveGrid;
 import gr.archimedesai.distributed.partitioner.LPTPartitioner;
 import gr.archimedesai.shapes.Point;
@@ -15,7 +15,6 @@ import org.apache.spark.broadcast.Broadcast;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.storage.StorageLevel;
 import scala.Tuple2;
-import scala.Tuple3;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -122,7 +121,7 @@ public class MainAdaptive {
             });
             System.out.println(Arrays.toString(concDiscStripesY));
 
-            List<Tuple3<Integer, long[], int[]>> concDiscStripesX = rddData.mapToPair(t->{
+            Tuple2<long[],HashMap<Integer,Integer>> concDiscStripesX = rddData.mapToPair(t->{
                 AdaptiveGrid gridBr = gridBroadcasted.getValue();
                 return new Tuple2<>(gridBr.getXStripeId(t.getX()), t);
             }).groupByKey(partitionerX).map(tup->{
@@ -137,10 +136,17 @@ public class MainAdaptive {
                     elementsPerCell[gridBr.getYStripeId(t.getY())]++;
                 }
 
-                Cell[] cells = new Cell[gridBr.getCellsInYAxis()];
+                int nonNullCells = 0;
+                for (int i : elementsPerCell) {
+                    if(i!=0){
+                        nonNullCells++;
+                    }
+                }
+
+                HashMap<Integer,Pair[]> map = new HashMap<>((int)Math.ceil(nonNullCells / 0.75));
                 for (int i = 0; i < elementsPerCell.length; i++) {
                     if(elementsPerCell[i]!=0){
-                        cells[i] = Cell.newCell(elementsPerCell[i]);
+                        map.put(i, new Pair[elementsPerCell[i]]);
                         elementsPerCell[i] = 0;
                     }
                 }
@@ -149,50 +155,71 @@ public class MainAdaptive {
                 while (it.hasNext()) {
                     Pair t = it.next();
                     int stripeId = gridBr.getYStripeId(t.getY());
-                    cells[stripeId].getPairs()[elementsPerCell[stripeId]]=t;
+                    map.get(stripeId)[elementsPerCell[stripeId]] = t;
                     elementsPerCell[stripeId]++;
                 }
 
-                for (int i = 0; i < cells.length; i++) {
-                    if(cells[i]!=null){
-                        Arrays.sort(cells[i].getPairs(), Comparator.comparing(Pair::getX));
-                    }
-                }
 
-                long[] numbers = new long[2];
+                map.forEach((k,v)->{
+                    Arrays.sort(v, Comparator.comparing(Pair::getX));
+                });
+
+                long[] numbers = new long[4];
                 for (int i = elementsPerCell.length - 1; i > 0; i--) {
                     if(elementsPerCell[i]!=0){
-                        Pair[] current = cells[i].getPairs();
+                        Pair[] current = map.get(i);
                         for (int j = i - 1; j >= 0; j--) {
                             if(elementsPerCell[j]!=0){
-                                long[] numbersFromTwoCells = Algorithms.southTile(current, cells[j].getPairs());
+                                long[] numbersFromTwoCells = Algorithms.southTile(current, map.get(j));
                                 numbers[0] = numbers[0] + numbersFromTwoCells[0];
                                 numbers[1] = numbers[1] + numbersFromTwoCells[1];
+    //                            numbers[2] = numbers[2] + numbersFromTwoCells[2];
                             }
                         }
                     }
                 }
+                HashMap<Integer,Integer> cellHistogram = new HashMap<>(map.size());
+                map.forEach((k,v)->{
+                    cellHistogram.put(gridBr.getCellIdFromXcYc(tup._1,k), v.length);
+                });
 
-                return new Tuple3<>(tup._1,numbers, elementsPerCell);
-            }).collect();
+                return new Tuple2<>(numbers, cellHistogram);
+            }).reduce((Function2<Tuple2<long[], HashMap<Integer, Integer>>, Tuple2<long[], HashMap<Integer, Integer>>, Tuple2<long[], HashMap<Integer, Integer>>>) (tuple1, tuple2) -> {
+                tuple1._1[0] = tuple1._1[0]+tuple2._1[0];
+                tuple1._1[1] = tuple1._1[1]+tuple2._1[1];
+    //            tuple1._1[2] = tuple1._1[2]+tuple2._1[2];
+                tuple1._2.putAll(tuple2._2);
+                return tuple1;
+            });
 
             long t2 = System.currentTimeMillis();
+            concDiscStripesY[0] = concDiscStripesY[0] + concDiscStripesX._1[0];
+            concDiscStripesY[1] = concDiscStripesY[1] + concDiscStripesX._1[1];
+
+//            for (int xc = grid.getCellsInXAxis()-1; xc >= 0; xc--) {
+//                for (int yc = grid.getCellsInYAxis()-1; yc >= 0; yc--) {
+//                    int c = (concDiscStripesX._2.getOrDefault((grid.getCellIdFromXcYc(xc, yc)),-1));
+//                    if(c!=-1){
+//                        long cDisc = 0;
+//                        for (int xcDisc = xc+1; xcDisc < grid.getCellsInXAxis(); xcDisc++) {
+//                            for (int ycDisc = 0; ycDisc < yc; ycDisc++) {
+//                                int c2 = (concDiscStripesX._2.getOrDefault((grid.getCellIdFromXcYc(xcDisc, ycDisc)),-1));
+//                                if(c2!=-1){
+//                                    cDisc = cDisc + c2;
+//                                }
+//                            }
+//                        }
+//                        concDiscStripesY[0] = concDiscStripesY[0] + cDisc*c;
+//                    }
+//                }
+//            }
+
+            concDiscStripesY[0] = concDiscStripesY[0] + Algorithms.discordantCells(concDiscStripesX._2, grid.getCellsInXAxis(), grid.getCellsInYAxis());
 
             long lineCount = 0;
-            int[][] histogram = new int[grid.getCellsInXAxis()][grid.getCellsInYAxis()];
-            for (Tuple3<Integer, long[], int[]> discStripesX : concDiscStripesX) {
-                concDiscStripesY[0] = concDiscStripesY[0] + discStripesX._2()[0];
-                concDiscStripesY[1] = concDiscStripesY[1] + discStripesX._2()[1];
-                int columnid = discStripesX._1();
-                int[] rows = discStripesX._3();
-                for (int i = 0; i < discStripesX._3().length; i++) {
-                    lineCount = lineCount + rows[i];
-                    histogram[columnid][i] = rows[i];
-                }
+            for (int value : concDiscStripesX._2.values()) {
+                lineCount = lineCount + value;
             }
-
-            concDiscStripesY[0] = concDiscStripesY[0] + Algorithms.discordantCells(histogram, grid.getCellsInXAxis(), grid.getCellsInYAxis());
-
             long t3 = System.currentTimeMillis();
 
             long concordants = ((lineCount*(lineCount-1))/2)-concDiscStripesY[0]-concDiscStripesY[1]-concDiscStripesY[2]-concDiscStripesY[3];
@@ -234,7 +261,7 @@ public class MainAdaptive {
             for (int xc = 0; xc < grid.getCellsInXAxis(); xc++) {
                 int pointsInX = 0;
                 for (int yc = 0; yc < grid.getCellsInYAxis(); yc++) {
-                    pointsInX = pointsInX + (histogram[xc][yc]);
+                    pointsInX = pointsInX + (concDiscStripesX._2.getOrDefault((grid.getCellIdFromXcYc(xc, yc)),0));
                 }
                 if(xc==0){
                     bwCellsX.write(xc+"\t"+"["+grid.getRectangle().getLowerBound().getX()+", "+grid.getSplitsX()[xc]+")"+"\t"+pointsInX+"\n");
@@ -248,7 +275,7 @@ public class MainAdaptive {
             for (int yc = 0; yc < grid.getCellsInYAxis(); yc++) {
                 int pointsInY = 0;
                 for (int xc = 0; xc < grid.getCellsInXAxis(); xc++) {
-                    pointsInY = pointsInY + (histogram[xc][yc]);
+                    pointsInY = pointsInY + (concDiscStripesX._2.getOrDefault((grid.getCellIdFromXcYc(xc, yc)),0));
                 }
                 if(yc==0){
                     bwCellsY.write(yc+"\t"+"["+grid.getRectangle().getLowerBound().getY()+", "+grid.getSplitsY()[yc]+")"+"\t"+pointsInY+"\n");

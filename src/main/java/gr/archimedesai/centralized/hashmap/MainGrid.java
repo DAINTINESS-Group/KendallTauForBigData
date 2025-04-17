@@ -1,9 +1,8 @@
-package gr.archimedesai.centralized;
+package gr.archimedesai.centralized.hashmap;
 
 import gr.archimedesai.Pair;
 import gr.archimedesai.algorithms.Algorithms;
-import gr.archimedesai.centralized.grid.Cell;
-import gr.archimedesai.centralized.grid.Grid;
+import gr.archimedesai.centralized.hashmap.grid.Grid;
 import gr.archimedesai.shapes.Point;
 import gr.archimedesai.shapes.Rectangle;
 import scala.Tuple2;
@@ -12,6 +11,8 @@ import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 public class MainGrid {
 
@@ -20,9 +21,6 @@ public class MainGrid {
         String filePath = args[0];
         final int xIndex = Integer.parseInt(args[1]);
         final int yIndex = Integer.parseInt(args[2]);
-        final int cellsInXAxis = Integer.parseInt(args[8]);
-        final int cellsInYAxis = Integer.parseInt(args[9]);
-        long beforeUsedMem = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
 
         try {
             File file = new File(args[10]);
@@ -37,9 +35,9 @@ public class MainGrid {
 
             long[] concordantsDiscordants = new long[4];
 
-            int[][] histogram = new int[cellsInXAxis][cellsInYAxis];
+            HashMap<Integer, Integer> histogram = new HashMap<>();
 
-            Grid grid = Grid.newGrid(Rectangle.newRectangle(Point.newPoint(Double.parseDouble(args[4]),Double.parseDouble(args[5])),Point.newPoint(Double.parseDouble(args[6]),Double.parseDouble(args[7]))),cellsInXAxis, cellsInYAxis);
+            Grid grid = Grid.newGrid(Rectangle.newRectangle(Point.newPoint(Double.parseDouble(args[4]),Double.parseDouble(args[5])),Point.newPoint(Double.parseDouble(args[6]),Double.parseDouble(args[7]))),Integer.parseInt(args[8]),Integer.parseInt(args[9]));
 
             long prosorino1=System.currentTimeMillis();
             try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
@@ -47,7 +45,8 @@ public class MainGrid {
                 while ((line = br.readLine()) != null) {
                     lineCount++;
                     String[] vals = line.split(args[3]);
-                    histogram[grid.getXStripeId(Double.parseDouble(vals[xIndex]))][grid.getYStripeId(Double.parseDouble(vals[yIndex]))]++;
+                    int cellId = grid.getCellId(Double.parseDouble(vals[xIndex]), Double.parseDouble(vals[yIndex]));
+                    histogram.compute(cellId, (key, value) -> (value==null)?1:(value+1));
                 }
             } catch (IOException e) {
                 e.printStackTrace();
@@ -76,17 +75,17 @@ public class MainGrid {
             long t2 = System.currentTimeMillis();
             System.out.println("Data read: " + (t2-t1) + " ms");
 
-            Cell[][] data = grid.getCells();
+            Map<Integer, Pair[]> data = grid.getCells();
 
             grid.sortPairsInCellsByX();
             for (int xc = grid.getCellsInXAxis()-1; xc >= 0; xc--) {
                 for (int yc = grid.getCellsInYAxis() - 1; yc > 0; yc--) {
-                    Cell c1 = data[xc][yc];//data.getOrDefault((grid.getCellIdFromXcYc(xc, yc)),null);
+                    Pair[] c1 = data.getOrDefault((grid.getCellIdFromXcYc(xc, yc)),null);
                     if(c1!=null){
                         for (int y = 0; y < yc; y++) {
-                            Cell c2 = data[xc][y];//data.getOrDefault((grid.getCellIdFromXcYc(xc, y)),null);
+                            Pair[] c2 = data.getOrDefault((grid.getCellIdFromXcYc(xc, y)),null);
                             if(c2!=null){
-                                long[] res = Algorithms.southTile(c1.getPairs(),c2.getPairs());
+                                long[] res = Algorithms.southTile(c1,c2);
                                 concordantsDiscordants[0] += res[0];
                                 concordantsDiscordants[1] += res[1];
     //                            concordantsDiscordants[2] += res[2];
@@ -99,20 +98,15 @@ public class MainGrid {
             long t3 = System.currentTimeMillis();
             System.out.println("South tiles processing: " + (t3-t2) + " ms");
 
-            for (int i = 0; i < data.length; i++) {
-                for (int j = 0; j < data[0].length; j++) {
-                    Cell v = data[i][j];
-                    if(v!=null){
-                        Tuple2<Pair[],long[]> tuple2 = Algorithms.apacheCommons(v.getPairs());
-                        long[] res = tuple2._2;
-                        v.replace(tuple2._1);
-                        concordantsDiscordants[0] += res[0];
-                        concordantsDiscordants[1] += res[1];
-                        concordantsDiscordants[2] += res[2];
-                        concordantsDiscordants[3] += res[3];
-                    }
-                }
-            }
+            data.forEach((k, v)-> {
+                Tuple2<Pair[],long[]> tuple2 = Algorithms.apacheCommons(v);
+                long[] res = tuple2._2;
+                data.replace(k, tuple2._1);
+                concordantsDiscordants[0] += res[0];
+                concordantsDiscordants[1] += res[1];
+                concordantsDiscordants[2] += res[2];
+                concordantsDiscordants[3] += res[3];
+            });
 
             System.out.println(Arrays.toString(concordantsDiscordants));
 
@@ -123,13 +117,13 @@ public class MainGrid {
 
             for (int yc = grid.getCellsInYAxis()-1; yc >= 0; yc--) {
                 for (int xc = 0; xc < grid.getCellsInXAxis()-1; xc++) {
-                    Cell c1 = data[xc][yc];//data.getOrDefault((grid.getCellIdFromXcYc(xc, yc)),null);
+                    Pair[] c1 = data.getOrDefault((grid.getCellIdFromXcYc(xc, yc)),null);
                     if(c1!=null){
                         for (int x = xc+1; x < grid.getCellsInXAxis(); x++) {
-                            Cell c2 = data[x][yc];//data.getOrDefault((grid.getCellIdFromXcYc(x, yc)),null);
+                            Pair[] c2 = data.getOrDefault((grid.getCellIdFromXcYc(x, yc)),null);
                             if(c2!=null){
 
-                                long[] res = Algorithms.eastTile(c1.getPairs(),c2.getPairs());
+                                long[] res = Algorithms.eastTile(c1,c2);
                                 concordantsDiscordants[0] += res[0];
     //                            concordantsDiscordants[1] += res[1];
                                 concordantsDiscordants[2] += res[1];
@@ -177,18 +171,21 @@ public class MainGrid {
             BufferedWriter bwCells = new BufferedWriter(new FileWriter("cells-gridRegular-"+grid.getCellsInXAxis()+"-"+grid.getCellsInYAxis()+"-"+path.getFileName()));
             for (int xc = grid.getCellsInXAxis()-1; xc >= 0; xc--) {
                 for (int yc = grid.getCellsInYAxis()-1; yc >= 0; yc--) {
-                    if(data[xc][yc]!=null){
-                        Pair[] pairs = data[xc][yc].getPairs();//.get((grid.getCellIdFromXcYc(xc, yc)));
-                        bwCells.write(xc+"\t"+yc+"\t"+pairs.length+"\n");
+                    Pair[] pairs = data.get((grid.getCellIdFromXcYc(xc, yc)));
+                    int c = -1;
+                    if(pairs!=null){
+                        c = pairs.length;
+                    }
+                    if(c!=-1){
+                        bwCells.write(xc+"\t"+yc+"\t"+c+"\n");
                     }else{
                         bwCells.write(xc+"\t"+yc+"\t"+0+"\n");
                     }
                 }
             }
             bwCells.close();
-            long afterUsedMem = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
 
-            bw.write(Integer.parseInt(args[8])+","+elapsedtime+ ","+((t2-t1)/1000)+","+((t3-t2)/1000)+","+((t4-t3)/1000)+","+((t5-t4)/1000)+","+((t6-t5)/1000)+","+grid.cellsStats()+","+(afterUsedMem-beforeUsedMem)/(1024*1024)+"\n");
+            bw.write(Integer.parseInt(args[8])+","+elapsedtime+ ","+((t2-t1)/1000)+","+((t3-t2)/1000)+","+((t4-t3)/1000)+","+((t5-t4)/1000)+","+((t6-t5)/1000)+","+grid.cellsStats()+"\n");
             bw.close();
         } catch (IOException e) {
             e.printStackTrace();

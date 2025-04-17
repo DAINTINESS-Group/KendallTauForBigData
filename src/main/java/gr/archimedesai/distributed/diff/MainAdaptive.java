@@ -1,9 +1,10 @@
-package gr.archimedesai.distributed;
+package gr.archimedesai.distributed.diff;
 
 import gr.archimedesai.Pair;
 import gr.archimedesai.algorithms.Algorithms;
+import gr.archimedesai.distributed.SparkLogParser;
 import gr.archimedesai.distributed.grid.AdaptiveGrid;
-import gr.archimedesai.distributed.partitioner.CustomPartitioner;
+import gr.archimedesai.distributed.partitioner.LPTPartitioner;
 import gr.archimedesai.shapes.Point;
 import gr.archimedesai.shapes.Rectangle;
 import org.apache.spark.SparkConf;
@@ -23,14 +24,17 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class MainAdaptivePerCell {
+public class MainAdaptive {
     public static void main(String[] args) {
-
-        SparkConf sparkConf = new SparkConf().set("spark.serializer", "org.apache.spark.serializer.KryoSerializer").set("spark.kryo.registrationRequired", "true")
-                .registerKryoClasses(new Class[]{Object.class,AdaptiveGrid.class, HashMap.class, Point.class, Rectangle.class, Pair.class, java.lang.invoke.SerializedLambda.class, org.apache.spark.util.collection.CompactBuffer[].class, org.apache.spark.util.collection.CompactBuffer.class/*,scala.reflect.ManifestFactory$.MODULE$.Any().getClass()*/});
+        SparkConf sparkConf = null;
+        try {
+            sparkConf = new SparkConf().set("spark.serializer", "org.apache.spark.serializer.KryoSerializer").set("spark.kryo.registrationRequired", "true")
+                    .registerKryoClasses(new Class[]{Object.class, AdaptiveGrid.class, HashMap.class, Point.class, Rectangle.class, Pair.class, java.lang.invoke.SerializedLambda.class, org.apache.spark.util.collection.CompactBuffer[].class, org.apache.spark.util.collection.CompactBuffer.class, Class.forName("scala.reflect.ManifestFactory$ObjectManifest")/*,,scala.reflect.ManifestFactory.class*/});
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
         SparkSession sparkSession = SparkSession.builder().config(sparkConf)/*.master("local[2]")*/.getOrCreate();
         JavaSparkContext jsc = JavaSparkContext.fromSparkContext(sparkSession.sparkContext());
-        CustomPartitioner partitioner = new CustomPartitioner(Integer.parseInt(args[11]));
 
         final int xIndex = Integer.parseInt(args[1]);
         final int yIndex = Integer.parseInt(args[2]);
@@ -58,13 +62,25 @@ public class MainAdaptivePerCell {
             }
 
             AdaptiveGrid grid = AdaptiveGrid.newAdaptiveGrid(Rectangle.newRectangle(Point.newPoint(Double.parseDouble(args[4]),Double.parseDouble(args[5])), Point.newPoint(Double.parseDouble(args[6]),Double.parseDouble(args[7]))), Integer.parseInt(args[8]), Integer.parseInt(args[9]),samplesPairs);
-            long tSample = System.currentTimeMillis();
 
+            HashMap<Integer,Integer> costsY = new HashMap<>((int)Math.ceil(grid.getCellsInYAxis() / 0.75));
+            for (Pair samplePair : samplesPairs) {
+                int stripeY = grid.getYStripeId(samplePair.getY());
+                costsY.compute(stripeY, (key, value) -> (value==null)?1:(value+1));
+            }
+            LPTPartitioner partitionerY = new LPTPartitioner(costsY,Integer.parseInt(args[11]));
+
+            HashMap<Integer,Integer> costsX = new HashMap<>((int)Math.ceil(grid.getCellsInXAxis() / 0.75));
+            for (Pair samplePair : samplesPairs) {
+                int stripeX = grid.getXStripeId(samplePair.getX());
+                costsX.compute(stripeX, (key, value) -> (value==null)?1:(value+1));
+            }
+            LPTPartitioner partitionerX = new LPTPartitioner(costsX,Integer.parseInt(args[11]));
+
+            long tSample = System.currentTimeMillis();
 
             Broadcast<AdaptiveGrid> gridBroadcasted = jsc.broadcast(grid);
             JavaRDD<String> rddString = jsc.textFile(args[0]);
-
-    //        JavaRDD<String> rddString = jsc.textFile(args[2] + args[3] + ".csv");
 
             JavaRDD<Pair> rddData = rddString.map((String line) -> {
                 String[] elements = line.split(args[3]);
@@ -73,87 +89,10 @@ public class MainAdaptivePerCell {
                 return Pair.newPair(x,y);
             }).persist(StorageLevel.MEMORY_ONLY());
 
-            long[] concDiscStripesY = rddData.mapToPair(t->{
-                AdaptiveGrid gridBr = gridBroadcasted.getValue();
-                return new Tuple2<>(gridBr.getYStripeId(t.getY()), t);
-            }).groupByKey(partitioner).map(tup->{
-
-                AdaptiveGrid gridBr = gridBroadcasted.getValue();
-
-                int[] elementsPerCell = new int[(int)gridBr.getCellsInXAxis()];
-
-                Iterator<Pair> it = tup._2.iterator();
-                while (it.hasNext()) {
-                    Pair t = it.next();
-                    elementsPerCell[gridBr.getXStripeId(t.getX())]++;
-                }
-
-                int nonNullCells = 0;
-                for (int i : elementsPerCell) {
-                    if(i!=0){
-                        nonNullCells++;
-                    }
-                }
-
-                HashMap<Integer,Pair[]> map = new HashMap<>((int)Math.ceil(nonNullCells / 0.75));
-                for (int i = 0; i < elementsPerCell.length; i++) {
-                    if(elementsPerCell[i]!=0){
-                        map.put(i, new Pair[elementsPerCell[i]]);
-                        elementsPerCell[i] = 0;
-                    }
-                }
-
-                it = tup._2.iterator();
-                while (it.hasNext()) {
-                    Pair t = it.next();
-                    int stripeId = gridBr.getXStripeId(t.getX());
-                    map.get(stripeId)[elementsPerCell[stripeId]] = t;
-                    elementsPerCell[stripeId]++;
-                }
-
-                map.forEach((k,v)->{
-                    Algorithms.sortPairsByX(v);
-                });
-
-                long[] numbers = new long[4];
-                map.forEach((k, v)-> {
-                    Tuple2<Pair[],long[]> tuple2 = Algorithms.apacheCommons(v);
-                    long[] res = tuple2._2;
-                    map.replace(k, tuple2._1);
-                    numbers[0] += res[0];
-                    numbers[1] += res[1];
-                    numbers[2] += res[2];
-                    numbers[3] += res[3];
-                });
-
-
-                for (int i = 0; i < elementsPerCell.length - 1; i++) {
-                    if(elementsPerCell[i]!=0){
-                        Pair[] current = map.get(i);
-                        for (int j = i+1; j <= elementsPerCell.length - 1; j++) {
-                            if(elementsPerCell[j]!=0){
-                                long[] numbersFromTwoCells = Algorithms.eastTile(current, map.get(j));
-                                numbers[0] = numbers[0] + numbersFromTwoCells[0];
-                                numbers[2] = numbers[2] + numbersFromTwoCells[1];
-                            }
-                        }
-                    }
-                }
-
-                return numbers;
-            }).reduce((Function2<long[], long[], long[]>) (o1, o2) -> {
-                o1[0]= o1[0]+o2[0];
-                o1[1]= o1[1]+o2[1];
-                o1[2]= o1[2]+o2[2];
-                o1[3]= o1[3]+o2[3];
-                return o1;
-            });
-            System.out.println(Arrays.toString(concDiscStripesY));
-
             Tuple2<long[],HashMap<Integer,Integer>> concDiscStripesX = rddData.mapToPair(t->{
                 AdaptiveGrid gridBr = gridBroadcasted.getValue();
                 return new Tuple2<>(gridBr.getXStripeId(t.getX()), t);
-            }).groupByKey(partitioner).map(tup->{
+            }).groupByKey(partitionerX).map(tup->{
 
                 AdaptiveGrid gridBr = gridBroadcasted.getValue();
 
@@ -188,9 +127,8 @@ public class MainAdaptivePerCell {
                     elementsPerCell[stripeId]++;
                 }
 
-
                 map.forEach((k,v)->{
-                    Arrays.sort(v, Comparator.comparing(Pair::getX));
+                    Algorithms.sortPairsByX(v);
                 });
 
                 long[] numbers = new long[4];
@@ -206,6 +144,17 @@ public class MainAdaptivePerCell {
                         }
                     }
                 }
+
+                map.forEach((k, v)-> {
+                    Tuple2<Pair[],long[]> tuple2 = Algorithms.apacheCommons(v);
+                    long[] res = tuple2._2;
+                    map.replace(k, tuple2._1);
+                    numbers[0] += res[0];
+                    numbers[1] += res[1];
+                    numbers[2] += res[2];
+                    numbers[3] += res[3];
+                });
+
                 HashMap<Integer,Integer> cellHistogram = new HashMap<>(map.size());
                 map.forEach((k,v)->{
                     cellHistogram.put(gridBr.getCellIdFromXcYc(tup._1,k), v.length);
@@ -215,36 +164,80 @@ public class MainAdaptivePerCell {
             }).reduce((Function2<Tuple2<long[], HashMap<Integer, Integer>>, Tuple2<long[], HashMap<Integer, Integer>>, Tuple2<long[], HashMap<Integer, Integer>>>) (tuple1, tuple2) -> {
                 tuple1._1[0] = tuple1._1[0]+tuple2._1[0];
                 tuple1._1[1] = tuple1._1[1]+tuple2._1[1];
+                tuple1._1[2] = tuple1._1[2]+tuple2._1[2];
+                tuple1._1[3] = tuple1._1[3]+tuple2._1[3];
                 tuple1._2.putAll(tuple2._2);
                 return tuple1;
             });
 
+            long[] concDiscStripesY = rddData.mapToPair(t->{
+                AdaptiveGrid gridBr = gridBroadcasted.getValue();
+                return new Tuple2<>(gridBr.getYStripeId(t.getY()), t);
+            }).groupByKey(partitionerY).map(tup->{
+                AdaptiveGrid gridBr = gridBroadcasted.getValue();
+
+                int[] elementsPerCell = new int[(int)gridBr.getCellsInXAxis()];
+
+                Iterator<Pair> it = tup._2.iterator();
+                while (it.hasNext()) {
+                    Pair t = it.next();
+                    elementsPerCell[gridBr.getXStripeId(t.getX())]++;
+                }
+
+                int nonNullCells = 0;
+                for (int i : elementsPerCell) {
+                    if(i!=0){
+                        nonNullCells++;
+                    }
+                }
+
+                HashMap<Integer,Pair[]> map = new HashMap<>((int)Math.ceil(nonNullCells / 0.75));
+                for (int i = 0; i < elementsPerCell.length; i++) {
+                    if(elementsPerCell[i]!=0){
+                        map.put(i, new Pair[elementsPerCell[i]]);
+                        elementsPerCell[i] = 0;
+                    }
+                }
+
+                it = tup._2.iterator();
+                while (it.hasNext()) {
+                    Pair t = it.next();
+                    int stripeId = gridBr.getXStripeId(t.getX());
+                    map.get(stripeId)[elementsPerCell[stripeId]] = t;
+                    elementsPerCell[stripeId]++;
+                }
+
+                map.forEach((k,v)->{
+                    Arrays.sort(v, Comparator.comparing(Pair::getY));
+                });
+
+                long[] numbers = new long[2];
+                for (int i = 0; i < elementsPerCell.length - 1; i++) {
+                    if(elementsPerCell[i]!=0){
+                        Pair[] current = map.get(i);
+                        for (int j = i + 1; j <= elementsPerCell.length - 1; j++) {
+                            if(elementsPerCell[j]!=0){
+                                long[] numbersFromTwoCells = Algorithms.eastTile(current, map.get(j));
+                                numbers[0] = numbers[0] + numbersFromTwoCells[0];
+                                numbers[1] = numbers[1] + numbersFromTwoCells[1];
+                            }
+                        }
+                    }
+                }
+
+                return numbers;
+            }).reduce((Function2<long[], long[], long[]>) (o1, o2) -> {
+                o1[0]= o1[0]+o2[0];
+                o1[1]= o1[1]+o2[1];
+                return o1;
+            });
+            System.out.println(Arrays.toString(concDiscStripesY));
+
             long t2 = System.currentTimeMillis();
-            concDiscStripesY[0] = concDiscStripesY[0] + concDiscStripesX._1[0];
-            concDiscStripesY[1] = concDiscStripesY[1] + concDiscStripesX._1[1];
+            concDiscStripesX._1[0] = concDiscStripesX._1[0] + concDiscStripesY[0];
+            concDiscStripesX._1[2] = concDiscStripesX._1[2] + concDiscStripesY[1];
 
-
-//            for (int xc = grid.getCellsInXAxis()-1; xc >= 0; xc--) {
-//                for (int yc = grid.getCellsInYAxis()-1; yc >= 0; yc--) {
-//                    int c = (concDiscStripesX._2.getOrDefault((grid.getCellIdFromXcYc(xc, yc)),-1));
-//                    if(c!=-1){
-//                        long cDisc = 0;
-//
-//                        for (int xcDisc = xc+1; xcDisc < grid.getCellsInXAxis(); xcDisc++) {
-//                            for (int ycDisc = 0; ycDisc < yc; ycDisc++) {
-//                                int c2 = (concDiscStripesX._2.getOrDefault((grid.getCellIdFromXcYc(xcDisc, ycDisc)),-1));
-//                                if(c2!=-1){
-//                                    cDisc = cDisc + c2;
-//                                }
-//                            }
-//                        }
-//                        concDiscStripesY[0] = concDiscStripesY[0] + cDisc*c;
-//                    }
-//                }
-//            }
-
-            concDiscStripesY[0] = concDiscStripesY[0] + Algorithms.discordantCells(concDiscStripesX._2, grid.getCellsInXAxis(), grid.getCellsInYAxis());
-
+            concDiscStripesX._1[0] = concDiscStripesX._1[0] + Algorithms.discordantCells(concDiscStripesX._2, grid.getCellsInXAxis(), grid.getCellsInYAxis());
 
             long lineCount = 0;
             for (int value : concDiscStripesX._2.values()) {
@@ -252,11 +245,11 @@ public class MainAdaptivePerCell {
             }
             long t3 = System.currentTimeMillis();
 
-            long concordants = ((lineCount*(lineCount-1))/2)-concDiscStripesY[0]-concDiscStripesY[1]-concDiscStripesY[2]-concDiscStripesY[3];
-            double tau = (concordants-concDiscStripesY[0])/Math.sqrt((double)(concordants+concDiscStripesY[0]+concDiscStripesY[1])*(concordants+concDiscStripesY[0]+concDiscStripesY[2]));
+            long concordants = ((lineCount*(lineCount-1))/2)-concDiscStripesX._1[0]-concDiscStripesX._1[1]-concDiscStripesX._1[2]-concDiscStripesX._1[3];
+            double tau = (concordants-concDiscStripesX._1[0])/Math.sqrt((double)(concordants+concDiscStripesX._1[0]+concDiscStripesX._1[1])*(concordants+concDiscStripesX._1[0]+concDiscStripesX._1[2]));
             long elapsedtime = ((System.currentTimeMillis() - t1) / 1000);
 
-            System.out.println(Arrays.toString(concDiscStripesY));
+            System.out.println(Arrays.toString(concDiscStripesX._1));
             System.out.println("tau is: " + tau);
             System.out.println(elapsedtime);
 
@@ -284,18 +277,40 @@ public class MainAdaptivePerCell {
             }
 
             Path path = Paths.get(args[0]);
-            BufferedWriter bwCells = new BufferedWriter(new FileWriter("cells-gridAdaptive-"+grid.getCellsInXAxis()+"-"+grid.getCellsInYAxis()+"-"+path.getFileName()));
-            for (int xc = grid.getCellsInXAxis()-1; xc >= 0; xc--) {
-                for (int yc = grid.getCellsInYAxis()-1; yc >= 0; yc--) {
-                    int c = (concDiscStripesX._2.getOrDefault((grid.getCellIdFromXcYc(xc, yc)),-1));
-                    if(c!=-1){
-                        bwCells.write(xc+"\t"+yc+"\t"+c+"\n");
-                    }else{
-                        bwCells.write(xc+"\t"+yc+"\t"+0+"\n");
-                    }
+            BufferedWriter bwCellsX = new BufferedWriter(new FileWriter("stripes-gridAdaptive-"+grid.getCellsInXAxis()+"-"+grid.getCellsInYAxis()+"-"+"X-"+path.getFileName()));
+            BufferedWriter bwCellsY = new BufferedWriter(new FileWriter("stripes-gridAdaptive-"+grid.getCellsInXAxis()+"-"+grid.getCellsInYAxis()+"-"+"Y-"+path.getFileName()));
+
+
+            for (int xc = 0; xc < grid.getCellsInXAxis(); xc++) {
+                int pointsInX = 0;
+                for (int yc = 0; yc < grid.getCellsInYAxis(); yc++) {
+                    pointsInX = pointsInX + (concDiscStripesX._2.getOrDefault((grid.getCellIdFromXcYc(xc, yc)),0));
+                }
+                if(xc==0){
+                    bwCellsX.write(xc+"\t"+"["+grid.getRectangle().getLowerBound().getX()+", "+grid.getSplitsX()[xc]+")"+"\t"+pointsInX+"\n");
+                }else if(xc== grid.getCellsInXAxis()-1){
+                    bwCellsX.write(xc+"\t"+"["+grid.getSplitsX()[xc-1]+", "+grid.getRectangle().getUpperBound().getX()+")"+"\t"+pointsInX+"\n");
+                } else{
+                    bwCellsX.write(xc+"\t"+"["+grid.getSplitsX()[xc-1]+", "+grid.getSplitsX()[xc]+")"+"\t"+pointsInX+"\n");
                 }
             }
-            bwCells.close();
+
+            for (int yc = 0; yc < grid.getCellsInYAxis(); yc++) {
+                int pointsInY = 0;
+                for (int xc = 0; xc < grid.getCellsInXAxis(); xc++) {
+                    pointsInY = pointsInY + (concDiscStripesX._2.getOrDefault((grid.getCellIdFromXcYc(xc, yc)),0));
+                }
+                if(yc==0){
+                    bwCellsY.write(yc+"\t"+"["+grid.getRectangle().getLowerBound().getY()+", "+grid.getSplitsY()[yc]+")"+"\t"+pointsInY+"\n");
+                }else if(yc== grid.getCellsInYAxis()-1){
+                    bwCellsY.write(yc+"\t"+"["+grid.getSplitsY()[yc-1]+", "+grid.getRectangle().getUpperBound().getY()+")"+"\t"+pointsInY+"\n");
+                } else{
+                    bwCellsY.write(yc+"\t"+"["+grid.getSplitsY()[yc-1]+", "+grid.getSplitsY()[yc]+")"+"\t"+pointsInY+"\n");
+                }
+            }
+
+            bwCellsX.close();
+            bwCellsY.close();
 
             bw.write(Integer.parseInt(args[8])+","+elapsedtime+","+((tSample-t1)/1000)+","+sparkLogValues+","+((t3-t2)/1000)+","+sparkLogMb+"\n");
             bw.close();

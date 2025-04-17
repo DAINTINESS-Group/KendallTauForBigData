@@ -1,8 +1,7 @@
 package gr.archimedesai.algorithms;
 
 import gr.archimedesai.Pair;
-import gr.archimedesai.centralized.grid.Grid;
-import scala.Array;
+import gr.archimedesai.centralized.hashmap.grid.Grid;
 import scala.Tuple2;
 
 import java.util.*;
@@ -23,7 +22,7 @@ public class Algorithms {
     public static Tuple2<Pair[], long[]> apacheCommons(Pair[] points) {
 
         final int n = points.length;
-        final long numPairs = sum(n - 1);
+//        final long numPairs = sum(n - 1);
 
 //        Arrays.sort(points, new Comparator<Pair>() {
 //            /** {@inheritDoc} */
@@ -573,6 +572,7 @@ public class Algorithms {
         int[] myarr = new int[cellsInXAxis];
         long discorants = 0;
 
+        int ijCell;
         myarr[cellsInXAxis-1]=histogram.getOrDefault(cellsInXAxis-1,0);
         for (int i = cellsInXAxis-2; i >= 0; i--) {
             myarr[i] = histogram.getOrDefault(i,0/*i,0*/) + myarr[i+1];
@@ -583,9 +583,207 @@ public class Algorithms {
             myarr[cellsInXAxis-1] = myarr[cellsInXAxis-1] + histogram.getOrDefault(cellsInXAxis-1+(cellsInXAxis*j),0);
             for (int i = cellsInXAxis-2; i >= 0; i--) {
                 int below = myarr[i];
-                myarr[i] += myarr[i+1]-diag + histogram.getOrDefault(i+(cellsInXAxis*j),0);
-                discorants = discorants + (long) histogram.getOrDefault(i + (cellsInXAxis * j), 0) *diag;
+                ijCell = histogram.getOrDefault(i+(cellsInXAxis*j),0);
+                myarr[i] += myarr[i+1]-diag + ijCell;
+                discorants = discorants + (long) ijCell *diag;
                 diag = below;
+            }
+        }
+        return discorants;
+    }
+
+    public static long approximate(HashMap<Integer,Integer> histogram, int cellsInXAxis, int cellsInYAxis) {
+
+        long[] arr = new long[cellsInXAxis];
+        long discorants = 0;
+        arr[cellsInXAxis-1]=histogram.getOrDefault(cellsInXAxis-1,0).longValue();
+        discorants = (arr[cellsInXAxis-1] * (arr[cellsInXAxis-1]- 1))/4;
+
+        long lastCellInRow;
+        long ijcell;
+        long below;
+
+        for (int i = cellsInXAxis-2; i >= 0; i--) {
+            long icell = histogram.getOrDefault(i,0).longValue();
+            arr[i] = icell + arr[i+1];
+            discorants = discorants + ((icell *  (icell -1))/4);
+            discorants = discorants + ((icell * arr[i+1])/2);
+//            for (int k = i+1; k<cellsInXAxis ; k++) {
+//                discorants = discorants + ((icell*histogram.getOrDefault(k,0).longValue())/2);
+//            }
+        }
+
+        for (int j = 1; j < cellsInYAxis; j++) {
+            long diagonal = arr[cellsInXAxis-1];
+            lastCellInRow = histogram.getOrDefault((cellsInXAxis-1)+(cellsInXAxis * j),0);
+            arr[cellsInXAxis-1] = arr[cellsInXAxis-1] + lastCellInRow;
+            discorants = discorants + ((lastCellInRow * (lastCellInRow-1))/4);
+            discorants = discorants + ((lastCellInRow*diagonal)/2);
+//            for(int l = 0;l<j; l++) {
+//                discorants = discorants + ((lastCellInRow * histogram.getOrDefault((cellsInXAxis-1)+(cellsInXAxis * l),0)))/2;
+//            }
+
+            for(int i = cellsInXAxis-2; i >= 0; i--) {
+                ijcell = histogram.getOrDefault(i+ (cellsInXAxis*j),0).longValue();
+
+//                for(int k = i+1; k<cellsInXAxis ; k++) {
+//                    discorants = discorants + ((ijcell * histogram.getOrDefault(k+ (cellsInXAxis*j), 0).longValue())/2);
+//                }
+//
+//                for(int l = j-1; l>=0 ; l--) {
+//                    discorants = discorants + ((ijcell * histogram.getOrDefault(i+ (cellsInXAxis*l), 0).longValue())/2);
+//                }
+
+                below = arr[i];
+                arr[i] = arr[i]+arr[i+1]-diagonal+ijcell;
+                discorants = discorants + (ijcell * diagonal);
+                discorants = discorants + ((ijcell*(ijcell-1))/4);
+                discorants = discorants + ((ijcell*(arr[i+1]-diagonal))/2);
+                discorants = discorants + (((ijcell*(below-diagonal))/2));
+                diagonal = below;
+            }
+        }
+        return discorants;
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public static long discordantCells(int[][] histogram, int cellsInXAxis, int cellsInYAxis) {
+
+        int[] myarr = new int[cellsInXAxis];
+        long discorants = 0;
+
+        myarr[cellsInXAxis-1]=histogram[cellsInXAxis-1][0];
+        for (int i = cellsInXAxis-2; i >= 0; i--) {
+            myarr[i] = histogram[i][0] + myarr[i+1];
+        }
+
+        for (int j = 1; j < cellsInYAxis; j++) {
+            int diag = myarr[cellsInXAxis-1];
+            myarr[cellsInXAxis-1] = myarr[cellsInXAxis-1] + histogram[cellsInXAxis-1][j];//.getOrDefault(cellsInXAxis-1+(cellsInXAxis*j),0);
+            for (int i = cellsInXAxis-2; i >= 0; i--) {
+                int below = myarr[i];
+                myarr[i] += myarr[i+1]-diag + histogram[i][j];//.getOrDefault(i+(cellsInXAxis*j),0);
+                discorants = discorants + (long) histogram[i][j]*diag;//.getOrDefault(i + (cellsInXAxis * j), 0) *diag;
+                diag = below;
+            }
+        }
+        return discorants;
+
+    }
+
+//    public static double approximate1(int[][] histogram, int cellsInXAxis, int cellsInYAxis) {
+//
+//        double[] arr = new double[cellsInXAxis];
+//        double discorants = 0;
+//        arr[cellsInXAxis-1]=histogram[cellsInXAxis-1][0];//.getOrDefault(cellsInXAxis-1,0).longValue();
+//        discorants = (arr[cellsInXAxis-1] * (arr[cellsInXAxis-1]- 1))/4;
+//
+//        double lastCellInRow;
+//        double ijcell;
+//        double below;
+//
+//        for (int i = cellsInXAxis-2; i >= 0; i--) {
+//            double icell = histogram[i][0];//.getOrDefault(i,0).longValue();
+//            arr[i] = icell + arr[i+1];
+//            discorants = discorants + ((icell *  (icell -1))/4);
+//            for (int k = i+1; k<cellsInXAxis ; k++) {
+//                discorants = discorants + ((icell*histogram[k][0])/2);
+//            }
+//        }
+//
+//        for (int j = 1; j < cellsInYAxis; j++) {
+//            double diagonal = arr[cellsInXAxis-1];
+//            lastCellInRow = histogram[cellsInXAxis-1][j];//.getOrDefault((cellsInXAxis-1)+(cellsInXAxis * j),0);
+//            arr[cellsInXAxis-1] = arr[cellsInXAxis-1] + lastCellInRow;
+//            discorants = discorants + ((lastCellInRow * (lastCellInRow-1))/4);
+//
+//            for(int l = 0;l<j; l++) {
+//                discorants = discorants + ((lastCellInRow * histogram[cellsInXAxis-1][l]))/2;
+//            }
+//
+//            for(int i = cellsInXAxis-2; i >= 0; i--) {
+//                ijcell = histogram[i][j];
+//                discorants = discorants + ((ijcell*(ijcell-1))/4);
+//
+//                for(int k = i+1; k<cellsInXAxis ; k++) {
+//                    discorants = discorants + ((ijcell * histogram[k][j])/2);
+//                }
+//
+//                for(int l = j-1; l>=0 ; l--) {
+//                    discorants = discorants + ((ijcell * histogram[i][l])/2);
+//                }
+//
+//                below = arr[i];
+//                arr[i] = arr[i]+arr[i+1]-diagonal+ijcell;
+//                discorants = discorants + (ijcell * diagonal);
+//                diagonal = below;
+//            }
+//        }
+//        return discorants;
+//    }
+
+    public static double approximate(int[][] histogram, int cellsInXAxis, int cellsInYAxis) {
+
+        double[] arr = new double[cellsInXAxis];
+        double discorants = 0;
+        arr[cellsInXAxis-1]=histogram[cellsInXAxis-1][0];
+        discorants = (arr[cellsInXAxis-1] * (arr[cellsInXAxis-1]- 1))/4;
+
+        double lastCellInRow;
+        double ijcell;
+        double below;
+
+        for (int i = cellsInXAxis-2; i >= 0; i--) {
+            double icell = histogram[i][0];//.getOrDefault(i,0).longValue();
+            arr[i] = icell + arr[i+1];
+            discorants = discorants + ((icell *  (icell -1))/4);
+            discorants = discorants + ((icell*arr[i+1])/2);
+//            for (int k = i+1; k<cellsInXAxis ; k++) {
+//                discorants = discorants + ((icell*histogram[k][0])/2);
+//            }
+        }
+
+        for (int j = 1; j < cellsInYAxis; j++) {
+            double diagonal = arr[cellsInXAxis-1];
+            lastCellInRow = histogram[cellsInXAxis-1][j];//.getOrDefault((cellsInXAxis-1)+(cellsInXAxis * j),0);
+            arr[cellsInXAxis-1] = arr[cellsInXAxis-1] + lastCellInRow;
+            discorants = discorants + ((lastCellInRow * (lastCellInRow-1))/4);
+            discorants = discorants + ((lastCellInRow*diagonal)/2);
+//            for(int l = 0;l<j; l++) {
+//                discorants = discorants + ((lastCellInRow * histogram[cellsInXAxis-1][l]))/2;
+//            }
+
+            for(int i = cellsInXAxis-2; i >= 0; i--) {
+                ijcell = histogram[i][j];
+
+//                for(int k = i+1; k<cellsInXAxis ; k++) {
+//                    discorants = discorants + ((ijcell * histogram[k][j])/2);
+//                }
+//
+//                for(int l = j-1; l>=0 ; l--) {
+//                    discorants = discorants + ((ijcell * histogram[i][l])/2);
+//                }
+
+                below = arr[i];
+                arr[i] = arr[i]+arr[i+1]-diagonal+ijcell;
+                discorants = discorants + (ijcell * diagonal);
+                discorants = discorants + ((ijcell*(ijcell-1))/4);
+                discorants = discorants + ((ijcell*(arr[i+1]-diagonal))/2);
+                discorants = discorants + (((ijcell*(below-diagonal))/2));
+                diagonal = below;
             }
         }
         return discorants;

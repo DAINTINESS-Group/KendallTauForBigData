@@ -25,7 +25,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class MainAdaptive {
+public class MainAdaptiveAggregated {
     public static void main(String[] args) {
         SparkConf sparkConf = null;
         try {
@@ -159,13 +159,16 @@ public class MainAdaptive {
                     }
                 }
 
+                Tuple2<double[],long[]>[] aggregatedDataX = getAggregatedValuesOnX(cells);
+
                 long[] numbers = new long[2];
                 for (int i = elementsPerCell.length - 1; i > 0; i--) {
                     if(elementsPerCell[i]!=0){
-                        Pair[] current = cells[i].getPairs();
+                        Tuple2<double[],long[]> current = aggregatedDataX[i];
                         for (int j = i - 1; j >= 0; j--) {
                             if(elementsPerCell[j]!=0){
-                                long[] numbersFromTwoCells = Algorithms.southTile(current, cells[j].getPairs());
+                                Tuple2<double[],long[]> southernCell = aggregatedDataX[j];
+                                long[] numbersFromTwoCells = Algorithms.southTile(current._1, current._2, southernCell._1, southernCell._2);
                                 numbers[0] = numbers[0] + numbersFromTwoCells[0];
                                 numbers[1] = numbers[1] + numbersFromTwoCells[1];
                             }
@@ -268,5 +271,42 @@ public class MainAdaptive {
             e.printStackTrace();
         }
 
+    }
+
+    private static Tuple2<double[],long[]>[] getAggregatedValuesOnX(Cell[] cells){
+        Tuple2<double[],long[]>[] aggregatedValuesX = new Tuple2[cells.length];// HashMap<>(((int)Math.ceil(cells.size() / 0.75)));
+
+        for (int i1 = 0; i1 < cells.length; i1++) {
+            if(cells[i1]!=null){
+                Pair[] v = cells[i1].getPairs();
+                int distinctCount = 1;
+                for (int i = 1; i < v.length; i++) {
+                    if (Double.compare(v[i].getX(), v[i - 1].getX()) != 0) {
+                        distinctCount++;
+                    }
+                }
+
+                double[] values = new double[distinctCount];
+                long[] valuesFreq = new long[distinctCount];
+
+                values[0] = v[0].getX();
+                valuesFreq[0] = v.length;
+                int position = 1;
+
+                int valueDistinct = 1;
+                for (int i = 1; i < v.length; i++) {
+                    if (Double.compare(v[i].getX(), v[i - 1].getX()) != 0) {
+                        values[position] = v[i].getX();
+                        valuesFreq[position] = valuesFreq[position - 1] - valueDistinct;
+                        position++;
+                        valueDistinct = 1;
+                    } else {
+                        valueDistinct++;
+                    }
+                }
+                aggregatedValuesX[i1] = new Tuple2(values, valuesFreq);
+            }
+        }
+        return aggregatedValuesX;
     }
 }

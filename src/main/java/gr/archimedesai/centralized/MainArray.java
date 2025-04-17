@@ -13,6 +13,7 @@ public class MainArray {
 
         final int xIndex = Integer.parseInt(args[1]);
         final int yIndex = Integer.parseInt(args[2]);
+        long beforeUsedMem = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
 
         try {
             File file = new File(args[4]);
@@ -61,7 +62,9 @@ public class MainArray {
 
             System.out.println(Arrays.toString(concDisc));
             System.out.println("tau is: " + tau);
-            bw.write((elapsedtime+","+(t2-t1)/1000+","+ (t3-t2)/1000+"\n"));
+            long afterUsedMem = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
+
+            bw.write((elapsedtime+","+(t2-t1)/1000+","+ (t3-t2)/1000+","+(afterUsedMem-beforeUsedMem)/(1024*1024)+"\n"));
             bw.close();
         } catch (IOException e) {
             e.printStackTrace();

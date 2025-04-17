@@ -1,8 +1,8 @@
-package gr.archimedesai.distributed;
+package gr.archimedesai.distributed.diff;
 
 import gr.archimedesai.Pair;
 import gr.archimedesai.algorithms.Algorithms;
-import gr.archimedesai.centralized.grid.Cell;
+import gr.archimedesai.distributed.SparkLogParser;
 import gr.archimedesai.distributed.grid.AdaptiveGrid;
 import gr.archimedesai.distributed.partitioner.LPTPartitioner;
 import gr.archimedesai.shapes.Point;
@@ -15,7 +15,6 @@ import org.apache.spark.broadcast.Broadcast;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.storage.StorageLevel;
 import scala.Tuple2;
-import scala.Tuple3;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -25,7 +24,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class MainAdaptive {
+public class MainAdaptiveAggregated {
     public static void main(String[] args) {
         SparkConf sparkConf = null;
         try {
@@ -36,7 +35,6 @@ public class MainAdaptive {
         }
         SparkSession sparkSession = SparkSession.builder().config(sparkConf)/*.master("local[2]")*/.getOrCreate();
         JavaSparkContext jsc = JavaSparkContext.fromSparkContext(sparkSession.sparkContext());
-//        CustomPartitioner partitioner = new CustomPartitioner(Integer.parseInt(args[11]));
 
         final int xIndex = Integer.parseInt(args[1]);
         final int yIndex = Integer.parseInt(args[2]);
@@ -91,38 +89,7 @@ public class MainAdaptive {
                 return Pair.newPair(x,y);
             }).persist(StorageLevel.MEMORY_ONLY());
 
-            long[] concDiscStripesY = rddData.mapToPair(t->{
-                AdaptiveGrid gridBr = gridBroadcasted.getValue();
-                return new Tuple2<>(gridBr.getYStripeId(t.getY()), t);
-            }).groupByKey(partitionerY).map(tup->{
-
-                int counter = 0;
-                Iterator<Pair> it = tup._2.iterator();
-                while (it.hasNext()) {
-                    it.next();
-                    counter++;
-                }
-
-                it = tup._2.iterator();
-                Pair[] points = new Pair[counter];
-                counter = 0;
-
-                while (it.hasNext()) {
-                    points[counter] = it.next();
-                    counter++;
-                }
-                Algorithms.sortPairsByX(points);
-                return Algorithms.apacheCommons(points)._2;
-            }).reduce((Function2<long[], long[], long[]>) (o1, o2) -> {
-                o1[0]= o1[0]+o2[0];
-                o1[1]= o1[1]+o2[1];
-                o1[2]= o1[2]+o2[2];
-                o1[3]= o1[3]+o2[3];
-                return o1;
-            });
-            System.out.println(Arrays.toString(concDiscStripesY));
-
-            List<Tuple3<Integer, long[], int[]>> concDiscStripesX = rddData.mapToPair(t->{
+            Tuple2<long[],HashMap<Integer,Integer>> concDiscStripesX = rddData.mapToPair(t->{
                 AdaptiveGrid gridBr = gridBroadcasted.getValue();
                 return new Tuple2<>(gridBr.getXStripeId(t.getX()), t);
             }).groupByKey(partitionerX).map(tup->{
@@ -137,10 +104,17 @@ public class MainAdaptive {
                     elementsPerCell[gridBr.getYStripeId(t.getY())]++;
                 }
 
-                Cell[] cells = new Cell[gridBr.getCellsInYAxis()];
+                int nonNullCells = 0;
+                for (int i : elementsPerCell) {
+                    if(i!=0){
+                        nonNullCells++;
+                    }
+                }
+
+                HashMap<Integer,Pair[]> map = new HashMap<>((int)Math.ceil(nonNullCells / 0.75));
                 for (int i = 0; i < elementsPerCell.length; i++) {
                     if(elementsPerCell[i]!=0){
-                        cells[i] = Cell.newCell(elementsPerCell[i]);
+                        map.put(i, new Pair[elementsPerCell[i]]);
                         elementsPerCell[i] = 0;
                     }
                 }
@@ -149,23 +123,24 @@ public class MainAdaptive {
                 while (it.hasNext()) {
                     Pair t = it.next();
                     int stripeId = gridBr.getYStripeId(t.getY());
-                    cells[stripeId].getPairs()[elementsPerCell[stripeId]]=t;
+                    map.get(stripeId)[elementsPerCell[stripeId]] = t;
                     elementsPerCell[stripeId]++;
                 }
 
-                for (int i = 0; i < cells.length; i++) {
-                    if(cells[i]!=null){
-                        Arrays.sort(cells[i].getPairs(), Comparator.comparing(Pair::getX));
-                    }
-                }
+                map.forEach((k,v)->{
+                    Algorithms.sortPairsByX(v);
+                });
 
-                long[] numbers = new long[2];
+                HashMap<Integer,Tuple2<double[],long[]>> aggregatedDataX = getAggregatedValuesOnX(map);
+
+                long[] numbers = new long[4];
                 for (int i = elementsPerCell.length - 1; i > 0; i--) {
                     if(elementsPerCell[i]!=0){
-                        Pair[] current = cells[i].getPairs();
+                        Tuple2<double[],long[]> current = aggregatedDataX.get(i);
                         for (int j = i - 1; j >= 0; j--) {
                             if(elementsPerCell[j]!=0){
-                                long[] numbersFromTwoCells = Algorithms.southTile(current, cells[j].getPairs());
+                                Tuple2<double[],long[]> southernCell = aggregatedDataX.get(j);
+                                long[] numbersFromTwoCells = Algorithms.southTile(current._1, current._2, southernCell._1, southernCell._2);
                                 numbers[0] = numbers[0] + numbersFromTwoCells[0];
                                 numbers[1] = numbers[1] + numbersFromTwoCells[1];
                             }
@@ -173,33 +148,114 @@ public class MainAdaptive {
                     }
                 }
 
-                return new Tuple3<>(tup._1,numbers, elementsPerCell);
-            }).collect();
+                map.forEach((k, v)-> {
+                    Tuple2<Pair[],long[]> tuple2 = Algorithms.apacheCommons(v);
+                    long[] res = tuple2._2;
+                    map.replace(k, tuple2._1);
+                    numbers[0] += res[0];
+                    numbers[1] += res[1];
+                    numbers[2] += res[2];
+                    numbers[3] += res[3];
+                });
+
+                HashMap<Integer,Integer> cellHistogram = new HashMap<>(map.size());
+                map.forEach((k,v)->{
+                    cellHistogram.put(gridBr.getCellIdFromXcYc(tup._1,k), v.length);
+                });
+
+                return new Tuple2<>(numbers, cellHistogram);
+            }).reduce((Function2<Tuple2<long[], HashMap<Integer, Integer>>, Tuple2<long[], HashMap<Integer, Integer>>, Tuple2<long[], HashMap<Integer, Integer>>>) (tuple1, tuple2) -> {
+                tuple1._1[0] = tuple1._1[0]+tuple2._1[0];
+                tuple1._1[1] = tuple1._1[1]+tuple2._1[1];
+                tuple1._1[2] = tuple1._1[2]+tuple2._1[2];
+                tuple1._1[3] = tuple1._1[3]+tuple2._1[3];
+                tuple1._2.putAll(tuple2._2);
+                return tuple1;
+            });
+
+            long[] concDiscStripesY = rddData.mapToPair(t->{
+                AdaptiveGrid gridBr = gridBroadcasted.getValue();
+                return new Tuple2<>(gridBr.getYStripeId(t.getY()), t);
+            }).groupByKey(partitionerY).map(tup->{
+                AdaptiveGrid gridBr = gridBroadcasted.getValue();
+
+                int[] elementsPerCell = new int[(int)gridBr.getCellsInXAxis()];
+
+                Iterator<Pair> it = tup._2.iterator();
+                while (it.hasNext()) {
+                    Pair t = it.next();
+                    elementsPerCell[gridBr.getXStripeId(t.getX())]++;
+                }
+
+                int nonNullCells = 0;
+                for (int i : elementsPerCell) {
+                    if(i!=0){
+                        nonNullCells++;
+                    }
+                }
+
+                HashMap<Integer,Pair[]> map = new HashMap<>((int)Math.ceil(nonNullCells / 0.75));
+                for (int i = 0; i < elementsPerCell.length; i++) {
+                    if(elementsPerCell[i]!=0){
+                        map.put(i, new Pair[elementsPerCell[i]]);
+                        elementsPerCell[i] = 0;
+                    }
+                }
+
+                it = tup._2.iterator();
+                while (it.hasNext()) {
+                    Pair t = it.next();
+                    int stripeId = gridBr.getXStripeId(t.getX());
+                    map.get(stripeId)[elementsPerCell[stripeId]] = t;
+                    elementsPerCell[stripeId]++;
+                }
+
+                map.forEach((k,v)->{
+                    Arrays.sort(v, Comparator.comparing(Pair::getY));
+                });
+                HashMap<Integer,Tuple2<double[],long[]>> aggregatedDataY = getAggregatedValuesOnY(map);
+
+                long[] numbers = new long[2];
+                for (int i = 0; i < elementsPerCell.length - 1; i++) {
+                    if(elementsPerCell[i]!=0){
+                        Tuple2<double[],long[]> current = aggregatedDataY.get(i);
+                        for (int j = i + 1; j <= elementsPerCell.length - 1; j++) {
+                            if(elementsPerCell[j]!=0){
+                                Tuple2<double[],long[]> eastCell = aggregatedDataY.get(j);
+                                long[] numbersFromTwoCells = Algorithms.eastTile(current._1,current._2, eastCell._1, eastCell._2);
+                                numbers[0] = numbers[0] + numbersFromTwoCells[0];
+                                numbers[1] = numbers[1] + numbersFromTwoCells[1];
+                            }
+                        }
+                    }
+                }
+
+                return numbers;
+            }).reduce((Function2<long[], long[], long[]>) (o1, o2) -> {
+                o1[0]= o1[0]+o2[0];
+                o1[1]= o1[1]+o2[1];
+                return o1;
+            });
+            System.out.println(Arrays.toString(concDiscStripesY));
 
             long t2 = System.currentTimeMillis();
+            concDiscStripesX._1[0] = concDiscStripesX._1[0] + concDiscStripesY[0];
+            concDiscStripesX._1[2] = concDiscStripesX._1[2] + concDiscStripesY[1];
+
+            concDiscStripesX._1[0] = concDiscStripesX._1[0] + Algorithms.discordantCells(concDiscStripesX._2, grid.getCellsInXAxis(), grid.getCellsInYAxis());
 
             long lineCount = 0;
-            int[][] histogram = new int[grid.getCellsInXAxis()][grid.getCellsInYAxis()];
-            for (Tuple3<Integer, long[], int[]> discStripesX : concDiscStripesX) {
-                concDiscStripesY[0] = concDiscStripesY[0] + discStripesX._2()[0];
-                concDiscStripesY[1] = concDiscStripesY[1] + discStripesX._2()[1];
-                int columnid = discStripesX._1();
-                int[] rows = discStripesX._3();
-                for (int i = 0; i < discStripesX._3().length; i++) {
-                    lineCount = lineCount + rows[i];
-                    histogram[columnid][i] = rows[i];
-                }
+            for (int value : concDiscStripesX._2.values()) {
+                lineCount = lineCount + value;
             }
-
-            concDiscStripesY[0] = concDiscStripesY[0] + Algorithms.discordantCells(histogram, grid.getCellsInXAxis(), grid.getCellsInYAxis());
-
             long t3 = System.currentTimeMillis();
 
-            long concordants = ((lineCount*(lineCount-1))/2)-concDiscStripesY[0]-concDiscStripesY[1]-concDiscStripesY[2]-concDiscStripesY[3];
-            double tau = (concordants-concDiscStripesY[0])/Math.sqrt((double)(concordants+concDiscStripesY[0]+concDiscStripesY[1])*(concordants+concDiscStripesY[0]+concDiscStripesY[2]));
+            long concordants = ((lineCount*(lineCount-1))/2)-concDiscStripesX._1[0]-concDiscStripesX._1[1]-concDiscStripesX._1[2]-concDiscStripesX._1[3];
+            double tau = (concordants-concDiscStripesX._1[0])/Math.sqrt((double)(concordants+concDiscStripesX._1[0]+concDiscStripesX._1[1])*(concordants+concDiscStripesX._1[0]+concDiscStripesX._1[2]));
             long elapsedtime = ((System.currentTimeMillis() - t1) / 1000);
 
-            System.out.println(Arrays.toString(concDiscStripesY));
+            System.out.println(Arrays.toString(concDiscStripesX._1));
+
             System.out.println("tau is: " + tau);
             System.out.println(elapsedtime);
 
@@ -234,7 +290,7 @@ public class MainAdaptive {
             for (int xc = 0; xc < grid.getCellsInXAxis(); xc++) {
                 int pointsInX = 0;
                 for (int yc = 0; yc < grid.getCellsInYAxis(); yc++) {
-                    pointsInX = pointsInX + (histogram[xc][yc]);
+                    pointsInX = pointsInX + (concDiscStripesX._2.getOrDefault((grid.getCellIdFromXcYc(xc, yc)),0));
                 }
                 if(xc==0){
                     bwCellsX.write(xc+"\t"+"["+grid.getRectangle().getLowerBound().getX()+", "+grid.getSplitsX()[xc]+")"+"\t"+pointsInX+"\n");
@@ -248,7 +304,7 @@ public class MainAdaptive {
             for (int yc = 0; yc < grid.getCellsInYAxis(); yc++) {
                 int pointsInY = 0;
                 for (int xc = 0; xc < grid.getCellsInXAxis(); xc++) {
-                    pointsInY = pointsInY + (histogram[xc][yc]);
+                    pointsInY = pointsInY + (concDiscStripesX._2.getOrDefault((grid.getCellIdFromXcYc(xc, yc)),0));
                 }
                 if(yc==0){
                     bwCellsY.write(yc+"\t"+"["+grid.getRectangle().getLowerBound().getY()+", "+grid.getSplitsY()[yc]+")"+"\t"+pointsInY+"\n");
@@ -267,6 +323,73 @@ public class MainAdaptive {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+    }
+
+    private static HashMap<Integer, Tuple2<double[], long[]>> getAggregatedValuesOnX(HashMap<Integer,Pair[]> map){
+        HashMap<Integer, Tuple2<double[], long[]>> aggregatedValuesX = new HashMap<>(((int)Math.ceil(map.size() / 0.75)));
+        map.forEach((k,v)->{
+            int distinctCount = 1;
+            for (int i = 1; i < v.length; i++) {
+                if (Double.compare(v[i].getX(), v[i - 1].getX())!=0) {
+                    distinctCount++;
+                }
+            }
+
+            double[] values = new double[distinctCount];
+            long[] valuesFreq = new long[distinctCount];
+
+            values[0] = v[0].getX();
+            valuesFreq[0] = v.length;
+            int position = 1;
+
+            int valueDistinct = 1;
+            for (int i = 1; i < v.length; i++) {
+                if (Double.compare(v[i].getX(), v[i - 1].getX())!=0) {
+                    values[position] = v[i].getX();
+                    valuesFreq[position] = valuesFreq[position-1]-valueDistinct;
+                    position++;
+                    valueDistinct = 1;
+                }else{
+                    valueDistinct++;
+                }
+            }
+            aggregatedValuesX.put(k, Tuple2.apply(values, valuesFreq));
+        });
+        return aggregatedValuesX;
+    }
+
+    private static HashMap<Integer, Tuple2<double[], long[]>> getAggregatedValuesOnY(HashMap<Integer,Pair[]> map) {
+        HashMap<Integer, Tuple2<double[], long[]>> aggregatedValuesY = new HashMap<>(((int)Math.ceil(map.size() / 0.75)));
+        map.forEach((k,v)->{
+            int distinctCount = 1;
+            for (int i = 1; i < v.length; i++) {
+                if (Double.compare(v[i].getY(), v[i - 1].getY())!=0) {
+                    distinctCount++;
+                }
+            }
+
+            double[] values = new double[distinctCount];
+            long[] valuesFreq = new long[distinctCount];
+
+            values[0] = v[0].getY();
+            valuesFreq[0] = v.length;
+            int position = 1;
+
+            int valueDistinct = 1;
+            for (int i = 1; i < v.length; i++) {
+                if (Double.compare(v[i].getY(), v[i - 1].getY())!=0) {
+                    values[position] = v[i].getY();
+                    valuesFreq[position] = valuesFreq[position-1]-valueDistinct;
+                    position++;
+                    valueDistinct = 1;
+                }else{
+                    valueDistinct++;
+                }
+            }
+            aggregatedValuesY.put(k, Tuple2.apply(values, valuesFreq));
+        });
+        return aggregatedValuesY;
 
     }
 }

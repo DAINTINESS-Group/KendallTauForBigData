@@ -5,7 +5,6 @@ import gr.archimedesai.algorithms.Algorithms;
 import gr.archimedesai.shapes.Rectangle;
 
 import java.util.*;
-import java.util.stream.DoubleStream;
 
 public class AdaptiveGrid {
 
@@ -15,8 +14,8 @@ public class AdaptiveGrid {
     private final int cellsInXAxis;
     private final int cellsInYAxis;
 
-    private HashMap<Integer, Integer> counter;
-    private HashMap<Integer, Pair[]> cells;
+    private int[][] counter;
+    private final Cell[][] cells;
 
     private AdaptiveGrid(Rectangle rectangle, int cellsInXAxis, int cellsInYAxis, List<Pair> samples){
         this.rectangle = rectangle;
@@ -41,27 +40,25 @@ public class AdaptiveGrid {
 //        System.out.println(splitsX.length + " min:"+rectangle.getLowerBound().getX() + " " + Arrays.toString(splitsX) + " max:"+rectangle.getUpperBound().getX() );
 //        System.out.println(splitsY.length + " min:"+rectangle.getLowerBound().getY() + " " + Arrays.toString(splitsY) + " max:"+rectangle.getUpperBound().getY() );
         System.out.println(samples.size());
+        cells = new Cell[cellsInXAxis][cellsInYAxis];
     }
 
-    public void initializeMap(HashMap<Integer, Integer> counter){
+    public void initializeMap(int[][] counter){
         this.counter=counter;
-        cells = new HashMap<>(((int)Math.ceil(counter.size() / 0.75)));
 
-        counter.forEach((k,v)->{
-            cells.put(k, new Pair[v]);
-        });
-
-        counter.forEach((k,v)->{
-            counter.replace(k,0);
-        });
-
+        for (int i = 0; i < counter.length; i++) {
+            for (int j = 0; j < counter[0].length; j++) {
+                if(counter[i][j]!=0){
+                    cells[i][j]= Cell.newCell(counter[i][j]);
+                    counter[i][j]= 0;
+                }
+            }
+        }
     }
 
     public void putPair(Pair pair){
-        int cellId = getCellId(pair.getX(), pair.getY());
-        int index = counter.get(cellId);
-        counter.replace(cellId, index+1);
-        cells.get(cellId)[index] = pair;
+        cells[getXStripeId(pair.getX())][getYStripeId(pair.getY())].insert(pair, counter[getXStripeId(pair.getX())][getYStripeId(pair.getY())]);
+        counter[getXStripeId(pair.getX())][getYStripeId(pair.getY())]++;
     }
 
 //    public void clearCounter(){
@@ -69,7 +66,7 @@ public class AdaptiveGrid {
 //        counter = null;
 //    }
 
-//    public int getCellId(double x, double y) {
+    //    public int getCellId(double x, double y) {
 //        int xc = -1;
 //        int yc = -1;
 //
@@ -234,40 +231,57 @@ public class AdaptiveGrid {
     }
 
     public void sortPairsInCellsByX(){
-        cells.forEach((k,v)->{
-            Algorithms.sortPairsByX(v);
-//            Arrays.sort(v, new Comparator<Pair>() {
-//                /** {@inheritDoc} */
-//                @Override
-//                public int compare(Pair pair1, Pair pair2) {
-//                    int compareFirst = Double.compare(pair1.getX(),pair2.getX());
-//                    return compareFirst != 0 ? compareFirst : Double.compare(pair1.getY(),pair2.getY());
-//                }
-//            });
-        });
+        for (int i = 0; i < cells.length; i++) {
+            for (int j = 0; j < cells[0].length; j++) {
+                if(counter[i][j]!=0) {
+                    Algorithms.sortPairsByX(cells[i][j].getPairs());
+                }
+            }
+        }
     }
 
     public void sortPairsInCellsByY(){
-        cells.forEach((k,v)->{
-            Arrays.sort(v, new Comparator<Pair>() {
-                /** {@inheritDoc} */
-                @Override
-                public int compare(Pair pair1, Pair pair2) {
-                    int compareFirst = Double.compare(pair1.getY(),pair2.getY());
-                    return compareFirst != 0 ? compareFirst : Double.compare(pair1.getX(),pair2.getX());
+        for (int i = 0; i < cells.length; i++) {
+            for (int j = 0; j < cells[0].length; j++) {
+                if(counter[i][j]!=0) {
+                    Arrays.sort(cells[i][j].getPairs(), new Comparator<Pair>() {
+                        /**
+                         * {@inheritDoc}
+                         */
+                        @Override
+                        public int compare(Pair pair1, Pair pair2) {
+                            int compareFirst = Double.compare(pair1.getY(), pair2.getY());
+                            return compareFirst != 0 ? compareFirst : Double.compare(pair1.getX(), pair2.getX());
+                        }
+                    });
                 }
-            });
-        });
+            }
+        }
     }
 
-    public Map<Integer, Pair[]> getCells() {
+    public Cell[][] getCells() {
         return cells;
     }
 
     public String cellsStats() {
-        List<Integer> numbers = new ArrayList<>(cells.size());
-        for (Map.Entry<Integer, Pair[]> integerEntry : cells.entrySet()) {
-            numbers.add(integerEntry.getValue().length);
+
+        int nonEmpty = 0;
+        for (int i = 0; i < cells.length; i++) {
+            for (int j = 0; j < cells.length; j++) {
+                if(cells[i][j]!=null){
+                    nonEmpty++;
+                }
+            }
+        }
+
+        List<Integer> numbers = new ArrayList<>(nonEmpty);
+        for (int i = 0; i < cells.length; i++) {
+            for (int j = 0; j < cells.length; j++) {
+                Cell p = cells[i][j];
+                if(p!=null){
+                    numbers.add(p.getPairs().length);
+                }
+            }
         }
 
         double mean = numbers.stream().mapToDouble(i->i).average().orElse(Integer.MIN_VALUE);
@@ -277,9 +291,6 @@ public class AdaptiveGrid {
                 .average()
                 .orElse(Integer.MIN_VALUE);
         double stdDev = Math.sqrt(variance);
-        return cells.size()+","+(int) min + "," +(int) max + "," + stdDev;
+        return nonEmpty+","+(int) min + "," +(int) max + "," + stdDev;
     }
-
-
-
 }
