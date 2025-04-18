@@ -1,3 +1,0 @@
-mvn clean && mvn -Dmaven.test.skip=true package && scp target/parallel-kendalls-tau-1.0-SNAPSHOT.jar ktr:/mnt/vdb/dataset/kendalls-tau/
-
-mvn dependency:copy-dependencies -DoutputDirectory=lib
