@@ -60,17 +60,13 @@ public class MainAdaptiveGrid {
                     lineCount++;
                     String[] vals = line.split(args[3]);
                     histogram[grid.getXStripeId(Double.parseDouble(vals[xIndex]))][grid.getYStripeId(Double.parseDouble(vals[yIndex]))]++;
-//                    histogram.compute(cellId, (key, value) -> (value==null)?1:(value+1));
                 }
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            long prosorino2=System.currentTimeMillis();
-            System.out.println("Prosorino2: "+(prosorino2-prosorino1)/1000);
 
             grid.initializeMap(histogram);
             long prosorino3=System.currentTimeMillis();
-            System.out.println("Prosorino3: "+(prosorino3-prosorino2)/1000);
 
             try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
                 String line;

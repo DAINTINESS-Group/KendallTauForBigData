@@ -40,22 +40,12 @@ public class Grid {
             }
         }
 
-//        for (int i = 0; i < counter.length; i++) {
-//            for (int j = 0; j < counter[0].length; j++) {
-//                counter[i][j]= 0;
-//            }
-//        }
     }
 
     public void putPair(Pair pair){
         cells[getXStripeId(pair.getX())][getYStripeId(pair.getY())].insert(pair, counter[getXStripeId(pair.getX())][getYStripeId(pair.getY())]);
         counter[getXStripeId(pair.getX())][getYStripeId(pair.getY())]++;
     }
-
-//    public void clearCounter(){
-//        counter.clear();
-//        counter = null;
-//    }
 
     public int getCellId(double x, double y) {
         int xc = (int) ((x-rectangle.getLowerBound().getX()) / this.x);

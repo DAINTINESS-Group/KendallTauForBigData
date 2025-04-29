@@ -37,9 +37,6 @@ public class AdaptiveGrid {
         for (int k = 1; k < cellsInYAxis; k++) {
             splitsY[k-1] = samples.get((int) Math.floor(k * ((samples.size() - 1) / (double) cellsInYAxis))).getY();
         }
-//        System.out.println(splitsX.length + " min:"+rectangle.getLowerBound().getX() + " " + Arrays.toString(splitsX) + " max:"+rectangle.getUpperBound().getX() );
-//        System.out.println(splitsY.length + " min:"+rectangle.getLowerBound().getY() + " " + Arrays.toString(splitsY) + " max:"+rectangle.getUpperBound().getY() );
-        System.out.println(samples.size());
         cells = new Cell[cellsInXAxis][cellsInYAxis];
     }
 
