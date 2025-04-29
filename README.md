@@ -24,18 +24,18 @@ Test classes are located in `./src/test/`, organized into:
 
 These tests are **plug-and-play** — no parameter configuration is required. They are pre-configured to work directly with the included datasets.
 
-## Prerequisites
+### Prerequisites
 
 * Java
 * Maven
 * (For distributed tests) Apache Spark
 
-Run Centralized Tests
+### Run Centralized Tests
 ```
 mvn -Dtest="centralized.*Test" test
 ```
 
-Run Distributed Tests (requires Spark)
+### Run Distributed Tests (requires Spark)
 ```
 mvn -Dtest="distributed.*Test" test
 ```
