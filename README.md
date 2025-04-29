@@ -24,7 +24,7 @@ Test classes are located in `./src/test/`, organized into:
 
 These tests are **plug-and-play** — no parameter configuration is required. They are pre-configured to work directly with the included datasets.
 
-Prerequisites
+## Prerequisites
 
 * Java
 * Maven
@@ -40,7 +40,7 @@ Run Distributed Tests (requires Spark)
 mvn -Dtest="distributed.*Test" test
 ```
 
-⚙️ Build Instructions
+## ⚙️ Build Instructions
 To build the JAR and extract dependencies:
 ```
 mvn clean
