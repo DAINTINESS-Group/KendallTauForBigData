@@ -199,6 +199,68 @@ class ApproximateTauTest {
     }
 
     @Test
+    void approximateGaiaSet() {
+        final String filePath = "./src/main/resources/data/gaia.csv";
+        final String sampleFilePath = "./src/main/resources/data/samples/gaia.csv";
+        final int xIndex = 0;
+        final int yIndex = 2;
+        final int cellsInXAxis = 200;
+        final int cellsInYAxis = 200;
+        final String delimiter =",";
+
+        final double minX = 2.32451;
+        final double minY = 2.0164533;
+        final double maxX = 22.697629;
+        final double maxY = 24.695998;
+
+        long beforeUsedMem = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
+        long t1 = System.currentTimeMillis();
+        long lineCount = 0;
+
+        List<Pair> samplesPairs = new ArrayList<>();
+        try (BufferedReader br = new BufferedReader(new FileReader(sampleFilePath))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                String[] vals = line.split(delimiter);
+                samplesPairs.add(Pair.newPair(Double.parseDouble(vals[xIndex]), Double.parseDouble(vals[yIndex])));
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+
+        AdaptiveGrid grid = AdaptiveGrid.newGrid(Rectangle.newRectangle(Point.newPoint(minX, minY),Point.newPoint(maxX, maxY)),cellsInXAxis,cellsInYAxis, samplesPairs);
+
+        try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                lineCount++;
+                String[] vals = line.split(delimiter);
+                grid.updateCell(Double.parseDouble(vals[xIndex]), Double.parseDouble(vals[yIndex]));
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        System.out.println("Sampling + Data loading: "+(System.currentTimeMillis()-t1)+" ms");
+
+
+        long t2 = System.currentTimeMillis();
+
+        double discordants = Algorithms.approximate(grid.getCells(), grid.getCellsInXAxis(), grid.getCellsInYAxis());
+        double concordants = ((lineCount*(lineCount-1))/2d)-discordants;
+        double tau = (concordants - discordants) /(concordants+discordants);
+
+        System.out.println("Approximate processing "+(System.currentTimeMillis()-t2)+" ms");
+
+        long elapsedtime = System.currentTimeMillis();
+
+        System.out.println("tau is: " + tau);
+        long afterUsedMem = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
+        System.out.println("Elapsed time: " + (elapsedtime-t1) + " ms" +", "+"Memory Usage: " + ((afterUsedMem-beforeUsedMem)/(1024*1024))+ " MB");
+
+    }
+
+    @Test
     void approximateRadiationSet() {
         final String filePath = "./src/main/resources/data/radiation.csv";
         final String sampleFilePath = "./src/main/resources/data/samples/radiation.csv";
