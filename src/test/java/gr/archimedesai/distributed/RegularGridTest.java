@@ -26,7 +26,7 @@ class RegularGridTest {
     void regularGridGaussianSet() throws ClassNotFoundException {
 
         final int sparkPartitions = 16;
-        final String filePath = "./src/main/resources/gaussian.csv";
+        final String filePath = "./src/main/resources/data/gaussian.csv";
         final int xIndex = 0;
         final int yIndex = 1;
         final int cellsInXAxis = 50;
@@ -179,7 +179,7 @@ class RegularGridTest {
     void regularGridSierpinskiSet() throws ClassNotFoundException {
 
         final int sparkPartitions = 16;
-        final String filePath = "./src/main/resources/sierpinski.csv";
+        final String filePath = "./src/main/resources/data/sierpinski.csv";
         final int xIndex = 0;
         final int yIndex = 1;
         final int cellsInXAxis = 50;
@@ -332,7 +332,7 @@ class RegularGridTest {
     void regularGridTaxiSet() throws ClassNotFoundException {
 
         final int sparkPartitions = 16;
-        final String filePath = "./src/main/resources/taxi.csv";
+        final String filePath = "./src/main/resources/data/taxi.csv";
         final int xIndex = 0;
         final int yIndex = 2;
         final int cellsInXAxis = 50;
@@ -486,7 +486,7 @@ class RegularGridTest {
     void regularGridRadiationSet() throws ClassNotFoundException {
 
         final int sparkPartitions = 16;
-        final String filePath = "./src/main/resources/radiation.csv";
+        final String filePath = "./src/main/resources/data/radiation.csv";
         final int xIndex = 0;
         final int yIndex = 2;
         final int cellsInXAxis = 50;

@@ -9,13 +9,13 @@ This project provides a scalable implementation of **Kendall's Tau** correlation
 It features multiple algorithms, including Knight’s, Regular Grid, Adaptive Grid, and Approximate Tau.
 
 ## 📁 Dataset Information
-Four datasets are included under `src/main/resources`:
+Four datasets are included under `src/main/resources/data/`:
 
 **Synthetic**: gaussian.csv, sierpinski.csv
 
-**Real-world**: taxi.csv, radiation.csv
+**Real-world**: gaia.csv, radiation.csv
 
-Sample datasets required for the Adaptive Grid algorithm are located in `src/main/resources/samples/`.
+Sample datasets required for the Adaptive Grid algorithm are located in `src/main/resources/data/samples/`.
 
 ## 🧪 Plug-and-Play Testing
 Test classes are located in `./src/test/`, organized into:

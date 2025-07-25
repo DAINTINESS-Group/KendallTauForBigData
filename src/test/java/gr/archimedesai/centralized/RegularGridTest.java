@@ -17,7 +17,7 @@ class RegularGridTest {
     @Test
     void regularGridGaussianSet() {
 
-        final String filePath = "./src/main/resources/gaussian.csv";
+        final String filePath = "./src/main/resources/data/gaussian.csv";
         final int xIndex = 0;
         final int yIndex = 1;
         final int cellsInXAxis = 50;
@@ -144,7 +144,7 @@ class RegularGridTest {
     @Test
     void regularGridSierpinskiSet() {
 
-        final String filePath = "./src/main/resources/sierpinski.csv";
+        final String filePath = "./src/main/resources/data/sierpinski.csv";
         final int xIndex = 0;
         final int yIndex = 1;
         final int cellsInXAxis = 50;
@@ -271,7 +271,7 @@ class RegularGridTest {
     @Test
     void regularGridTaxiSet() {
 
-        final String filePath = "./src/main/resources/taxi.csv";
+        final String filePath = "./src/main/resources/data/taxi.csv";
         final int xIndex = 0;
         final int yIndex = 2;
         final int cellsInXAxis = 50;
@@ -398,7 +398,7 @@ class RegularGridTest {
     @Test
     void regularGridRadiationSet() {
 
-        final String filePath = "./src/main/resources/radiation.csv";
+        final String filePath = "./src/main/resources/data/radiation.csv";
         final int xIndex = 0;
         final int yIndex = 2;
         final int cellsInXAxis = 50;

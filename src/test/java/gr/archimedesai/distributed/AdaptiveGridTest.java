@@ -28,8 +28,8 @@ class AdaptiveGridTest {
     void adaptiveGridGaussianSet() throws ClassNotFoundException {
 
         final int sparkPartitions = 16;
-        final String filePath = "./src/main/resources/gaussian.csv";
-        final String sampleFilePath = "./src/main/resources/samples/gaussian.csv";
+        final String filePath = "./src/main/resources/data/gaussian.csv";
+        final String sampleFilePath = "./src/main/resources/data/samples/gaussian.csv";
         final int xIndex = 0;
         final int yIndex = 1;
         final int cellsInXAxis = 50;
@@ -207,8 +207,8 @@ class AdaptiveGridTest {
     void adaptiveGridSierpinskiSet() throws ClassNotFoundException {
 
         final int sparkPartitions = 16;
-        final String filePath = "./src/main/resources/sierpinski.csv";
-        final String sampleFilePath = "./src/main/resources/samples/sierpinski.csv";
+        final String filePath = "./src/main/resources/data/sierpinski.csv";
+        final String sampleFilePath = "./src/main/resources/data/samples/sierpinski.csv";
         final int xIndex = 0;
         final int yIndex = 1;
         final int cellsInXAxis = 50;
@@ -386,8 +386,8 @@ class AdaptiveGridTest {
     void adaptiveGridTaxiSet() throws ClassNotFoundException {
 
         final int sparkPartitions = 16;
-        final String filePath = "./src/main/resources/taxi.csv";
-        final String sampleFilePath = "./src/main/resources/samples/taxi.csv";
+        final String filePath = "./src/main/resources/data/taxi.csv";
+        final String sampleFilePath = "./src/main/resources/data/samples/taxi.csv";
         final int xIndex = 0;
         final int yIndex = 2;
         final int cellsInXAxis = 50;
@@ -565,8 +565,8 @@ class AdaptiveGridTest {
     void adaptiveGridRadiationSet() throws ClassNotFoundException {
 
         final int sparkPartitions = 16;
-        final String filePath = "./src/main/resources/radiation.csv";
-        final String sampleFilePath = "./src/main/resources/samples/radiation.csv";
+        final String filePath = "./src/main/resources/data/radiation.csv";
+        final String sampleFilePath = "./src/main/resources/data/samples/radiation.csv";
         final int xIndex = 0;
         final int yIndex = 2;
         final int cellsInXAxis = 50;

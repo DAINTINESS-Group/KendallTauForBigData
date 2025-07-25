@@ -15,8 +15,8 @@ import java.util.List;
 class ApproximateTauTest {
     @Test
     void approximateGaussianSet() {
-        final String filePath = "./src/main/resources/gaussian.csv";
-        final String sampleFilePath = "./src/main/resources/samples/gaussian.csv";
+        final String filePath = "./src/main/resources/data/gaussian.csv";
+        final String sampleFilePath = "./src/main/resources/data/samples/gaussian.csv";
         final int xIndex = 0;
         final int yIndex = 1;
         final int cellsInXAxis = 200;
@@ -76,8 +76,8 @@ class ApproximateTauTest {
 
     @Test
     void approximateSierpinskiSet() {
-        final String filePath = "./src/main/resources/sierpinski.csv";
-        final String sampleFilePath = "./src/main/resources/samples/sierpinski.csv";
+        final String filePath = "./src/main/resources/data/data/sierpinski.csv";
+        final String sampleFilePath = "./src/main/resources/data/data/samples/sierpinski.csv";
         final int xIndex = 0;
         final int yIndex = 1;
         final int cellsInXAxis = 200;
@@ -138,8 +138,8 @@ class ApproximateTauTest {
 
     @Test
     void approximateTaxiSet() {
-        final String filePath = "./src/main/resources/taxi.csv";
-        final String sampleFilePath = "./src/main/resources/samples/taxi.csv";
+        final String filePath = "./src/main/resources/data/taxi.csv";
+        final String sampleFilePath = "./src/main/resources/data/samples/taxi.csv";
         final int xIndex = 0;
         final int yIndex = 2;
         final int cellsInXAxis = 200;
@@ -200,8 +200,8 @@ class ApproximateTauTest {
 
     @Test
     void approximateRadiationSet() {
-        final String filePath = "./src/main/resources/radiation.csv";
-        final String sampleFilePath = "./src/main/resources/samples/radiation.csv";
+        final String filePath = "./src/main/resources/data/radiation.csv";
+        final String sampleFilePath = "./src/main/resources/data/samples/radiation.csv";
         final int xIndex = 0;
         final int yIndex = 2;
         final int cellsInXAxis = 200;

@@ -14,7 +14,7 @@ class KnightTest {
     void knightGaussianSet() {
             final int xIndex = 0;
             final int yIndex = 1;
-            final String filePath ="./src/main/resources/gaussian.csv";
+            final String filePath ="./src/main/resources/data/gaussian.csv";
             final String delimiter = ",";
             long beforeUsedMem = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
 
@@ -63,7 +63,7 @@ class KnightTest {
     void knightSierpinskiSet() {
         final int xIndex = 0;
         final int yIndex = 1;
-        final String filePath ="./src/main/resources/sierpinski.csv";
+        final String filePath ="./src/main/resources/data/sierpinski.csv";
         final String delimiter = ",";
         long beforeUsedMem = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
 
@@ -112,7 +112,7 @@ class KnightTest {
     void knightTaxiSet() {
         final int xIndex = 0;
         final int yIndex = 2;
-        final String filePath ="./src/main/resources/taxi.csv";
+        final String filePath ="./src/main/resources/data/taxi.csv";
         final String delimiter = ",";
         long beforeUsedMem = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
 
@@ -161,7 +161,7 @@ class KnightTest {
     void knightRadiationSet() {
         final int xIndex = 0;
         final int yIndex = 2;
-        final String filePath ="./src/main/resources/radiation.csv";
+        final String filePath ="./src/main/resources/data/radiation.csv";
         final String delimiter = ",";
         long beforeUsedMem = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
 
